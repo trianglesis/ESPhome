@@ -10,6 +10,11 @@ Flash ESP 32 board to default:
 
 # Better install with Home Assistant via ESPHome UI
 
+# It was fully achieved by WEB flash util and Home Assistant ESP32 addon later.
+
+
+This doesn't really helped, but it's here for refference.
+
 # Prepare local WSL (Oracle Linux 9)
 
 ## Install xdg-user-dirs
@@ -50,3 +55,5 @@ ERROR Error resolving IP address of smg-ii.local. Is it connected to WiFi?
 ERROR (If this error persists, please set a static IP address: https://esphome.io/components/wifi.html#manual-ips)
 ERROR Error resolving IP address: Error resolving address with mDNS: Did not respond. Maybe the device is offline., [Errno -2] Name or service not known
 ```
+
+
