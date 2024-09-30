@@ -1,0 +1,30 @@
+esphome:
+  name: eightreetst
+  friendly_name: EightreeTST
+
+rtl87xx:
+  board: generic-rtl8720cf-2mb-992k
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "V00pC5mi5TSpQWFpCTIm/Ng/ZfHHurIdboO2aCeHmc4="
+
+ota:
+  - platform: esphome
+    password: "c5c6b768a6aa137e2ae669e14f5d8cb5"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Eightreetst Fallback Hotspot"
+    password: "KBYNuVtt0aML"
+
+captive_portal:
+    
