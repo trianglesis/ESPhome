@@ -4,3 +4,4 @@ external/
 /venv/*
 /external/*
 my_proj/secrets.yaml
+.my_proj/secrets.yaml
