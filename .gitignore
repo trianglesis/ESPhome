@@ -1,0 +1,7 @@
+# Skip external repos
+venv/
+external/
+/venv/*
+/external/*
+venv
+external
