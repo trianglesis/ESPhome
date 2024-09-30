@@ -1,0 +1,1 @@
+# My ESPHome project examples
