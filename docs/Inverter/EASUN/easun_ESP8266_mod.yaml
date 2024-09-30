@@ -1,0 +1,426 @@
+substitutions:
+  name: "easun"
+  friendly_name: EAsun ESP 8266
+  tx_pin: GPIO4
+  rx_pin: GPIO5
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  min_version: 2024.6.0
+  name_add_mac_suffix: false
+  project:
+    name: esphome.web
+    version: dev
+
+esp8266:
+  board: esp01_1m
+
+# Enable logging
+logger:
+  level: INFO
+
+# If you use Home Assistant please remove this `mqtt` section and uncomment the `api` component!
+# The native API has many advantages over MQTT: https://esphome.io/components/api.html#advantages-over-mqtt
+mqtt:
+  broker: !secret mqtt_host
+  username: !secret mqtt_username
+  password: !secret mqtt_password
+  id: mqtt_client
+
+# Enable Home Assistant API
+api:
+
+uart:
+  - id: uart_0
+    baud_rate: 9600
+    tx_pin: ${tx_pin}
+    rx_pin: ${rx_pin}
+
+modbus:
+  - id: modbus0
+    uart_id: uart_0
+    send_wait_time: 200ms
+
+modbus_controller:
+  - id: smg0
+    address: 0x01
+    modbus_id: modbus0
+    command_throttle: 200ms
+    update_interval: 30s
+
+time:
+  - platform: sntp
+
+
+# Allow Over-The-Air updates
+ota:
+- platform: esphome
+
+# Allow provisioning Wi-Fi via serial
+improv_serial:
+
+wifi:
+  # Set up a wifi access point
+  ap: {}
+
+# In combination with the `ap` this allows the user
+# to provision wifi credentials to the device via WiFi AP.
+captive_portal:
+
+dashboard_import:
+  package_import_url: github://esphome/example-configs/esphome-web/esp8266.yaml@main
+  import_full_config: true
+
+# To have a "next url" for improv serial
+web_server:
+
+
+sensor:
+  # Fault code                                                    ULong 100 2 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} fault code"
+    address: 100
+    register_type: holding
+    value_type: U_DWORD
+    accuracy_decimals: 0
+
+  # Warning code                                                  ULong 108 2 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} warning code"
+    address: 108
+    register_type: holding
+    value_type: U_DWORD
+    accuracy_decimals: 0
+
+  # Operation Mode                                                UInt  201 1 R 0: Power On
+  #                                                                             1: Standby
+  #                                                                             2: Mains
+  #                                                                             3: Off-Grid
+  #                                                                             4: Bypass
+  #                                                                             5: Charging
+  #                                                                             6: Fault
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} operation mode id"
+    address: 201
+    register_type: holding
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  # Effective mains voltage                              0.1V     Int   202 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} ac voltage"
+    address: 202
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "V"
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  # Mains Frequency                                      0.01Hz   Int   203 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} ac frequency"
+    address: 203
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "Hz"
+    device_class: frequency
+    state_class: measurement
+    accuracy_decimals: 2
+    filters:
+      - multiply: 0.01
+
+  # Average mains power                                  1W       Int   204 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} average mains power"
+    address: 204
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+
+  # Effective inverter voltage                           0.1V     Int   205 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} effective inverter voltage"
+    address: 205
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "V"
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  # Effective inverter current                           0.1A     Int   206 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} effective inverter current"
+    address: 206
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "A"
+    device_class: current
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  # Inverter frequency                                   0.01Hz   Int   207 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} inverter frequency"
+    address: 207
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "Hz"
+    device_class: frequency
+    state_class: measurement
+    accuracy_decimals: 2
+    filters:
+      - multiply: 0.01
+
+  # Average inverter power                               1W       Int   208 1 R Positive numbers indicate inverter output, negative numbers indicate inverter input
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} average inverter power"
+    address: 208
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+
+  # Inverter charging power                              1W       Int   209 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} inverter charging power"
+    address: 209
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+
+  # Output effective voltage                             0.1V     Int   210 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} output effective voltage"
+    address: 210
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "V"
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  # Output effective Current                             0.1A     Int   211 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} output effective Current"
+    address: 211
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "A"
+    device_class: current
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  # Output frequency                                     0.01Hz   Int   212 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} output frequency"
+    address: 212
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "Hz"
+    device_class: frequency
+    state_class: measurement
+    accuracy_decimals: 2
+    filters:
+      - multiply: 0.01
+
+  # Output active power                                  1W       Int   213 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} output active power"
+    address: 213
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+
+  # Output apparent power                                1VA      Int   214 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} output apparent power"
+    address: 214
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "VA"
+    device_class: apparent_power
+    state_class: measurement
+    accuracy_decimals: 0
+
+  # Battery average voltage                              0.1V     Int   215 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} battery average voltage"
+    address: 215
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "V"
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  # Battery average Current                              0.1A     Int   216 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} battery average Current"
+    address: 216
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "A"
+    device_class: current
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  # Battery average power                                1W       Int   217 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} battery average power"
+    address: 217
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+
+  # Load percentage                                      1%       Int   225 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} load percentage"
+    address: 225
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "%"
+    # device_class: battery
+    state_class: measurement
+    accuracy_decimals: 0
+
+  # DCDC Temperature                                     1°C      Int   226 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} dcdc temperature"
+    address: 226
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 0
+
+  # Inverter Temperature                                 1°C      Int   227 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} inverter temperature"
+    address: 227
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 0
+
+  # Battery state of charge                              1%       UInt  229 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} battery state of charge"
+    address: 229
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "%"
+    device_class: battery
+    state_class: measurement
+    accuracy_decimals: 0
+
+  # Battery average current                              0.1A     Int   232 1 R Positive number means charging, negative number means discharging
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} battery average current"
+    address: 232
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "A"
+    device_class: current
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  # Inverter charging average current                    0.1A     Int   233 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} inverter charging average current"
+    address: 233
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "A"
+    device_class: current
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  # PV charging average current                          0.1A     Int   234 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} pv charging average current"
+    address: 234
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "A"
+    device_class: current
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  # Rated power                                           W       Uint  643 1 R
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} rated power"
+    address: 643
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "W"
+    device_class: power
+    # state_class: measurement
+    accuracy_decimals: 0
+
