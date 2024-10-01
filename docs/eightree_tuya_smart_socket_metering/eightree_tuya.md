@@ -9,9 +9,12 @@ Device: `eightree smart plug et20`
 ### Chip details:
 - https://docs.libretiny.eu/boards/generic-rtl8720cf-2mb-992k/
 - https://www.e-paper-display.com/products_detail/productId%3D529.html
-- (probably) https://developer.tuya.com/en/docs/iot/wbr1-module-datasheet?id=K9duisiao4qpa
+- (probably) https://developer.tuya.com/en/docs/iot/wbr1-module-datasheet
+- (or) https://developer.tuya.com/en/docs/iot/wbr3-module-datasheet
 - Listed as supported: https://docs.libretiny.eu/docs/status/supported/#tuya-inc
-- (probably) https://github.com/libretiny-eu/libretiny/issues/44#issuecomment-1791175300
+- (probably main topic) https://github.com/libretiny-eu/libretiny/issues/44#issuecomment-1791175300
+- (probably) https://github.com/libretiny-eu/libretiny/issues/235
+- Datasheet https://cetest02.cn-bj.ufileos.com/100001_2110255103/RTL872xZ2%20IC%20Datasheet.pdf
 
 
 ### Other info:
@@ -38,8 +41,12 @@ Run:
 ```shell
 # Test and show
 esphome config /home/user/projects/ESPhome/my_proj/eightree_dummy.yaml
+
 # Compile and save locally
+# Might not work See (probably main topic)
 esphome compile /home/user/projects/ESPhome/my_proj/eightree_dummy.yaml
+# Work, but it's not really the chip of the current smart socket. 
+esphome compile /home/user/projects/ESPhome/my_proj/eightree_dummy_custom.yaml
 
 # Compile and install!
 esphome run /home/user/projects/ESPhome/my_proj/eightree_dummy.yaml
