@@ -3,6 +3,14 @@
 
 - https://esphome.io/guides/installing_esphome
 
+Needed:
+- https://learn.microsoft.com/en-us/windows/wsl/connect-usb
+- https://github.com/dorssel/usbipd-win
+
+Next:
+- https://esphome.io/guides/getting_started_command_line#bonus-esphome-dashboard
+
+
 ```shell
 mkdir esphome
 cd esphome
@@ -64,3 +72,40 @@ optional arguments:
 
 - [Other example making ESP for SolarInverter](../inverter.md)
 
+# USB on WSL
+
+- https://learn.microsoft.com/en-us/windows/wsl/connect-usb
+- https://github.com/dorssel/usbipd-win
+- https://discourse.osmc.tv/t/lsusb-command-not-found-solved/7731
+
+Use `powershell` admin mode:
+
+```shell
+# List
+usbipd list
+
+# Bind to WSL
+usbipd bind --busid 11-1
+usbipd attach --wsl --busid 11-1
+```
+
+
+# Working
+
+
+## Start dashboard:
+
+read:
+- https://esphome.io/guides/getting_started_command_line#bonus-esphome-device-builder
+
+Run WEB dashboard only for this project:
+
+`esphome dashboard [-h] [--port PORT] [--address ADDRESS] [--username USERNAME] [--password PASSWORD] [--open-ui] [--socket SOCKET] configuration`
+
+```shell
+esphome dashboard my_proj/
+# More
+esphome dashboard --port=8080 --address=127.0.0.1 my_proj/
+```
+
+Open chrome: `http://127.0.0.1:8080/`

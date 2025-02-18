@@ -1,0 +1,36 @@
+esphome:
+  name: esp32-c6-1
+  friendly_name: ESP32_C6_1
+
+esp32:
+  board: esp32-c6-devkitc-1
+  flash_size: 4MB
+  variant: esp32c6
+  framework:
+    type: esp-idf
+    version: "5.3.1"
+    platform_version: 6.9.0
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "LYZkpDUXPwUD2glv64Di58KiJOsSlFc7duQfzZUml/U="
+
+ota:
+  - platform: esphome
+    password: "608c96fe5b1980ca0fd185e26ed0e1ad"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Esp32-C6-1 Fallback Hotspot"
+    password: "OOUNiEJg9Wsq"
+
+captive_portal:
+    
