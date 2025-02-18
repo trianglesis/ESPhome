@@ -1,10 +1,10 @@
 substitutions:
-  name: "esp32-c6-1"
-  friendly_name: "ESP32_C6_1"
+  name: "esp32-c6-2"
+  friendly_name: "ESP32_C6_2"
 
 esphome:
-  name: "esp32-c6-1"
-  friendly_name: "ESP32_C6_1"
+  name: "esp32-c6-2"
+  friendly_name: "ESP32_C6_2"
 
 esp32:
   board: esp32-c6-devkitc-1
@@ -22,11 +22,11 @@ logger:
 # Enable Home Assistant API
 api:
   encryption:
-    key: "oAxOawXjroqpjqfNGOxpfeuLgeUFvtZs8cGtqUO/ltU="
+    key: !secret api_key
 
 ota:
   - platform: esphome
-    password: "eb751856c9373ec7b57abee819782acd"
+    password: !secret ota_password
 
 wifi:
   ssid: !secret wifi_ssid
@@ -37,8 +37,8 @@ wifi:
   #   subnet: 255.255.255.0
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: "Esp32-C6-1 Fallback Hotspot"
-    password: "FU1avcJMWJr0"
+    ssid: "Esp32-C6-2 Fallback Hotspot"
+    password: !secret fall_back_wifi_password
 
 captive_portal:
 
