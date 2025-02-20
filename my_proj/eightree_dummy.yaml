@@ -1,30 +1,40 @@
+substitutions:
+  name: eightree-generic-rtl8720cf
+  friendly_name: "Eightree generic rtl8720cf"
 esphome:
-  name: eightreetst
-  friendly_name: EightreeTST
-
+  name: eightree-generic-rtl8720cf
+  friendly_name: "Eightree generic rtl8720cf"
 rtl87xx:
   board: generic-rtl8720cf-2mb-992k
 
-# Enable logging
 logger:
-
-# Enable Home Assistant API
+  level: INFO
 api:
   encryption:
-    key: "V00pC5mi5TSpQWFpCTIm/Ng/ZfHHurIdboO2aCeHmc4="
-
+    key: !secret api_key
 ota:
   - platform: esphome
-    password: "c5c6b768a6aa137e2ae669e14f5d8cb5"
-
+    password: !secret ota_password
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: "Eightreetst Fallback Hotspot"
-    password: "KBYNuVtt0aML"
+    ssid: "${friendly_name}"
+    password: !secret fall_back_wifi_password
+  reboot_timeout: 900s
+  fast_connect: true
 
 captive_portal:
+
+web_server:
+  port: 80
+  version: 3
+  sorting_groups:
+  - id: sorting_group_diagnostic
+    name: "Diagnostic info"
+    sorting_weight: 60
+  - id: sorting_group_service
+    name: "Service"
+    sorting_weight: 90
     

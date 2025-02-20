@@ -1,0 +1,91 @@
+# Basic Config
+substitutions:
+  name: "sonoff-basic-r2-1"
+  friendly_name: "Sonoff Basic R2 - 1"
+
+esphome:
+  name: "sonoff-basic-r2-1"
+  friendly_name: "Sonoff Basic R2 - 1"
+
+esp8266:
+  board: esp8285
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Sonoff-Basic-R2-1"
+    password: "PASSWRD"
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "KEYYYYY"
+ota:
+  - platform: esphome
+
+captive_portal:
+
+# Network info
+sensor:
+  - platform: wifi_signal
+    name: "${friendly_name} WiFi Signal"
+    update_interval: 60s
+
+  - platform: uptime
+    name: "${friendly_name} Uptime"
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "${friendly_name} IP Address"
+    ssid:
+      name: "${friendly_name} SSID"
+    bssid:
+      name: "${friendly_name} BSSID"
+    mac_address:
+      name: "${friendly_name} Mac Wifi Address"
+
+# Device Specific Config
+binary_sensor:
+  - platform: gpio
+    id: push_button
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: True
+    internal: true
+    on_press:
+      # Prevents unintended LED lit states.
+      if:
+        condition:
+          - switch.is_off: relay
+        then:
+          - light.turn_on: blue_led
+          - switch.turn_on: relay
+        else:
+          - switch.turn_off: relay
+
+light:
+  - platform: status_led
+    id: blue_led
+    internal: True
+    pin:
+      number: GPIO13
+      inverted: True
+
+switch:
+  # The relay switches on the red side of the LED when active.
+  - platform: gpio
+    name: "Sonoff Basic Relay"
+    pin: GPIO12
+    id: relay
+    on_turn_off:
+      if:
+        condition:
+          - light.is_on: blue_led
+        then:
+          - light.turn_off: blue_led

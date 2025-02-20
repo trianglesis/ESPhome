@@ -1,0 +1,377 @@
+# https://esphome.io/components/remote_receiver.html#configuration-variables
+substitutions:
+  name: "home-infrared"
+  friendly_name: "Athom IR"
+
+esphome:
+  name: athom-ar01-ir
+  friendly_name: Athom AR01 IR
+
+esp8266:
+  board: esp8285
+  restore_from_flash: true
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "KEYYY"
+  actions:
+    - service: send_ir
+      variables:
+        protocol: string
+        code: string
+        command: string
+        repeats: string
+      then:
+        - if:
+            condition: # --=[ *** DISH *** ]=--
+              lambda: 'return protocol == "DISH";'
+            then:
+              - logger.log: "Sending DISH data...!"
+              - remote_transmitter.transmit_dish:
+                  address: !lambda |-
+                        return std::stoi( code );
+                  command: !lambda |-
+                        return std::stoi( command );
+        - if:
+            condition: # --=[ *** JVC *** ]=--
+              lambda: 'return protocol == "JVC";'
+            then:
+              - logger.log: "Sending JVC data...!"
+              - remote_transmitter.transmit_jvc:
+                  data: !lambda |-
+                      int i;
+                      sscanf( code.c_str(), "%x", &i );
+                      return i;
+        - if:
+            condition: # --=[ *** LG *** ]=--
+              lambda: 'return protocol == "LG";'
+            then:
+              - logger.log: "Sending LG data...!"
+              - remote_transmitter.transmit_lg:
+                  data: !lambda |-
+                       int i;
+                       sscanf(code.c_str(), "%x", &i );
+                       return i;
+                  nbits: !lambda |-
+                        return std::stoi( command );
+        - if:
+            condition: # --=[ *** MAGIQUEST *** ]=--
+              lambda: 'return protocol == "MAGIQUEST";'
+            then:
+              - logger.log: "Sending MAGIQUEST data...!"
+              - remote_transmitter.transmit_magiquest:
+                  wand_id: !lambda |-
+                      int i;
+                      sscanf( code.c_str(), "%x", &i );
+                      return i;
+                  magnitude: !lambda |-
+                      int i;
+                      sscanf( command.c_str(), "%x", &i );
+                      return i;
+        - if:
+            condition: # --=[ *** NEC *** ]=--
+              lambda: 'return protocol == "NEC";'
+            then:
+              - logger.log: "Sending NEC data...!"
+              - remote_transmitter.transmit_nec:
+                  address: !lambda |-
+                      int i;
+                      sscanf( code.c_str(), "%x", &i );
+                      return i;
+                  command: !lambda |-
+                      int i;
+                      sscanf( command.c_str(), "%x", &i );
+                      return i;     
+        - if:
+            condition: # --=[ *** PANASONIC *** ]=--
+              lambda: 'return protocol == "PANASONIC";'
+            then:
+              - logger.log: "Sending PANASONIC data...!"
+              - remote_transmitter.transmit_panasonic:
+                  address: !lambda |-
+                      int i;
+                      sscanf( code.c_str(), "%x", &i );
+                      return i; 
+                  command: !lambda |-
+                      int i;
+                      sscanf( command.c_str(), "%x", &i );
+                      return i;
+        - if:
+            condition: # --=[ *** PIONEER *** ]=--
+              lambda: 'return protocol == "PIONEER";'
+            then:
+              - logger.log: "Sending PIONEER data...!"
+              - remote_transmitter.transmit_pioneer:
+                  rc_code_1: !lambda |-
+                      int i;
+                      sscanf( code.c_str(), "%x", &i );
+                      return i;
+                  rc_code_2: !lambda |-
+                      int i;
+                      sscanf( command.c_str(), "%x", &i );
+                      return i;
+                  repeat:
+                    times: !lambda |-
+                        return std::stoi( repeats );
+        - if:
+            condition: # --=[ *** PRONTO *** ]=--
+              lambda: 'return protocol == "PRONTO";'
+            then:
+              - logger.log: "Sending PRONTO data...!"
+              - remote_transmitter.transmit_pronto:
+                  data: !lambda |-
+                      return code.c_str();
+        - if:
+            condition: # --=[ *** RC5 *** ]=--
+              lambda: 'return protocol == "RC5";'
+            then:
+              - logger.log: "Sending RC5 data...!"
+              - remote_transmitter.transmit_rc5:
+                  address: !lambda |-
+                      int i;
+                      sscanf( code.c_str(), "%x", &i );
+                      return i; 
+                  command: !lambda |-
+                      int i;
+                      sscanf( command.c_str(), "%x", &i );
+                      return i;
+        - if:
+            condition: # --=[ *** RC6 *** ]=--
+              lambda: 'return protocol == "RC6";'
+            then:
+              - logger.log: "Sending RC6 data...!"
+              - remote_transmitter.transmit_rc6:
+                  address: !lambda |-
+                      int i;
+                      sscanf( code.c_str(), "%x", &i );
+                      return i;
+                  command: !lambda |-
+                      int i;
+                      sscanf( command.c_str(), "%x", &i );
+                      return i;
+        - if:
+            condition: # --=[ *** SAMSUNG *** ]=--
+              lambda: 'return protocol == "SAMSUNG";'
+            then:
+              - logger.log: "Sending SAMSUNG data...!"
+              - remote_transmitter.transmit_samsung:
+                  data: !lambda |-
+                      int i;
+                      sscanf( code.c_str(), "%x", &i );
+                      return i; 
+                  nbits: !lambda |-
+                        return std::stoi( command );   
+        - if:
+            condition: # --=[ *** SAMSUNG36 *** ]=--
+              lambda: 'return protocol == "SAMSUNG36";'
+            then:
+              - logger.log: "Sending SAMSUNG36 data...!"
+              - remote_transmitter.transmit_samsung36:
+                  address: !lambda |-
+                      int i;
+                      sscanf( code.c_str(), "%x", &i );
+                      return i;
+                  command: !lambda |-
+                      int i;
+                      sscanf( command.c_str(), "%x", &i );
+                      return i;
+        - if:
+            condition: # --=[ *** SONY *** ]=--
+              lambda: 'return protocol == "SONY";'
+            then:
+              - logger.log: "Sending SONY data...!"
+              - remote_transmitter.transmit_sony:
+                  data: !lambda |-
+                      int i;
+                      sscanf( code.c_str(), "%x", &i );
+                      return i; 
+                  nbits: !lambda |-
+                        return std::stoi( command );
+        - if:
+            condition: # --=[ *** TOSHIBA AC *** ]=--
+              lambda: 'return protocol == "TOSHIBA_AC";'
+            then:
+              - logger.log: "Sending TOSHIBA data...!"
+              - remote_transmitter.transmit_toshiba_ac:
+                  rc_code_1: !lambda |-
+                      int i;
+                      sscanf( code.c_str(), "%x", &i );
+                      return i;
+                  rc_code_2: !lambda |-
+                      int i;
+                      sscanf( command.c_str(), "%x", &i );
+                      return i;                        
+
+ota:
+  - platform: esphome
+    password: "PASS"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Athom-Ar01-Ir Fallback Hotspot"
+    password: "PASS"
+
+captive_portal:
+
+# Keep resources
+# web_server:
+#   port: 80
+    
+remote_receiver:
+  pin:
+    number: GPIO5
+    inverted: true
+  # Dump: https://community.home-assistant.io/t/esphome-ir-blaster-example/453159/23
+  # dump: 
+  #   - raw
+  #   - lg
+  # dump: all # Dumps received codes to logs.
+  dump: raw
+  idle: 100ms
+
+remote_transmitter:
+  pin:
+    number: GPIO4
+  carrier_duty_percent: 50%
+
+output:
+  - platform: gpio
+    pin: GPIO12
+    id: gpio_12
+  - platform: gpio
+    pin: GPIO13
+    id: gpio_13
+
+switch:
+  - platform: restart
+    name: "${friendly_name} restart"
+  - name: "Top LED"
+    id: led_top
+    platform: output
+    output: gpio_12
+  - name: "Middle LED"
+    id: led_middle
+    platform: output
+    output: gpio_13
+
+sensor:
+  - platform: wifi_signal
+    name: "${friendly_name} WiFi Signal"
+    update_interval: 60s
+
+  - platform: uptime
+    name: "${friendly_name} Uptime"
+
+binary_sensor:
+  - platform: status
+    name: "${friendly_name} IR Status"
+  - platform: gpio
+    pin:
+      number: GPIO0
+      mode:
+        input: true
+      inverted: true
+    name: Bottom Button
+    on_press:
+      then:
+        - switch.toggle:
+            id: led_middle
+        - delay: 2s
+        - switch.toggle:
+            id: led_top
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "${friendly_name} IP Address"
+    ssid:
+      name: "${friendly_name} SSID"
+    bssid:
+      name: "${friendly_name} BSSID"
+    mac_address:
+      name: "${friendly_name} Mac Wifi Address"
+
+# Services
+# PRONTO https://community.home-assistant.io/t/esp32-ir-remote-pronto-inconsistent-data-not-sending/504681/13
+button:
+  # Cooper & Hunter
+  - platform: template
+    name: "C&H Power Off"
+    on_press:
+      - remote_transmitter.transmit_raw:
+          carrier_frequency: 38kHz
+          code: [8992, -4490, 646, -560, 623, -585, 644, -1687, 621, -562, 647, -559, 646, -1687, 621, -1687, 623, -560, 646, -557, 648, -1686, 625, -1683, 622, -561, 645, -560, 649, -556, 650, -560, 646, -559, 648, -558, 647, -563, 645, -562, 644, -559, 647, -561, 674, -1659, 622, -555, 648, -560, 649, -557, 647, -561, 646, -560, 649, -557, 648, -1685, 622, -563, 646, -1683, 625, -554, 651, -558, 648, -1684, 648, -531, 651, -19992, 651, -1682, 648, -1658, 627, -1682, 627, -555, 650, -560, 672, -530, 674, -536, 671, -530, 654, -555, 650, -558, 665, -541, 673, -531, 677, -533, 675, -534, 674, -1658, 652, -1632, 674, -532, 673, -534, 674, -530, 675, -535, 670, -532, 676, -534, 670, -534, 675, -532, 671, -532, 674, -534, 672, -534, 673, -533, 672, -537, 672, -531, 671, -537, 672, -532, 647, -40003, 9009, -4471, 667, -537, 647, -560, 667, -539, 669, -536, 670, -539, 668, -537, 646, -561, 668, -538, 671, -536, 669, -538, 669, -536, 672, -537, 668, -537, 671, -535, 671, -537, 669, -536, 670, -539, 667, -539, 670, -536, 668, -539, 667, -537, 669, -539, 666, -539, 666, -539, 669, -540, 665, -538, 664, -546, 664, -542, 666, -539, 666, -1642, 644, -562, 642, -1665, 666, -543, 640, -1666, 640, -566, 666, -19975, 642, -567, 641, -564, 643, -567, 639, -565, 642, -566, 639, -567, 640, -564, 641, -568, 639, -566, 642, -567, 638, -567, 642, -565, 639, -569, 638, -567, 640, -569, 637, -567, 641, -567, 636, -570, 638, -567, 638, -570, 637, -568, 639, -569, 635, -569, 638, -568, 638, -570, 634, -570, 639, -571, 634, -571, 637, -570, 635, -1692, 616, -592, 614, -1694, 612]
+  - platform: template
+    name: "C&H Power On"
+    on_press:
+      - remote_transmitter.transmit_raw:
+          carrier_frequency: 38kHz
+          code: [8981, -4497, 643, -562, 644, -563, 644, -1690, 615, -1693, 612, -565, 645, -1688, 616, -1694, 616, -566, 643, -563, 644, -1691, 612, -1695, 614, -563, 645, -564, 642, -562, 643, -563, 644, -565, 643, -558, 646, -565, 619, -584, 623, -586, 640, -565, 643, -1692, 613, -1693, 612, -567, 643, -565, 619, -587, 621, -584, 642, -567, 619, -1713, 615, -566, 641, -1691, 613, -569, 617, -589, 617, -1715, 611, -569, 618, -20021, 619, -1716, 592, -1716, 591, -1715, 591, -590, 616, -587, 619, -588, 618, -589, 617, -588, 619, -587, 621, -587, 618, -589, 617, -588, 620, -586, 620, -588, 618, -1716, 593, -1715, 593, -589, 616, -589, 619, -586, 620, -588, 618, -589, 618, -586, 620, -586, 644, -563, 620, -588, 641, -564, 642, -564, 621, -586, 643, -564, 643, -561, 645, -562, 643, -1666, 642, -40009, 8983, -4496, 641, -564, 642, -563, 644, -562, 642, -564, 642, -563, 645, -564, 642, -565, 642, -562, 645, -562, 644, -564, 643, -564, 642, -563, 644, -562, 646, -561, 644, -563, 644, -564, 643, -563, 644, -563, 644, -561, 645, -562, 645, -562, 667, -538, 670, -536, 671, -537, 668, -538, 669, -535, 672, -535, 671, -537, 669, -538, 669, -1637, 669, -539, 668, -1639, 669, -538, 668, -1638, 667, -539, 667, -19971, 669, -540, 666, -539, 669, -538, 668, -539, 642, -564, 668, -539, 654, -553, 647, -561, 641, -565, 666, -539, 644, -564, 664, -544, 640, -564, 644, -564, 640, -566, 640, -566, 641, -567, 640, -564, 640, -567, 639, -565, 641, -565, 641, -566, 639, -567, 641, -565, 641, -566, 638, -568, 639, -567, 640, -565, 641, -568, 637, -1669, 639, -568, 637, -1673, 635]
+
+  # Deshman LED
+  - platform: template
+    name: "DeshmanLed ON"
+    on_press:
+      - remote_transmitter.transmit_raw:
+          carrier_frequency: 38kHz
+          code: [9052, -4492, 567, -564, 567, -565, 592, -539, 566, -566, 567, -564, 592, -540, 567, -564, 567, -565, 567, -1712, 544, -1713, 546, -1711, 550, -1708, 545, -1712, 545, -1712, 547, -1711, 544, -1713, 546, -564, 566, -1712, 545, -1712, 545, -566, 566, -565, 566, -565, 567, -1711, 545, -565, 566, -1712, 545, -566, 565, -565, 566, -1713, 545, -1711, 545, -1713, 547, -562, 566, -1712, 546]
+  - platform: template
+    name: "DeshmanLed Off"
+    on_press:
+      - remote_transmitter.transmit_raw:
+          carrier_frequency: 38kHz
+          code: [9067, -4514, 575, -557, 577, -557, 577, -556, 578, -556, 578, -555, 580, -554, 581, -552, 580, -553, 579, -1706, 554, -1705, 556, -1704, 555, -1706, 554, -1705, 554, -1707, 552, -1707, 556, -1705, 560, -1699, 555, -554, 578, -1706, 556, -554, 578, -1705, 556, -554, 579, -554, 579, -553, 581, -553, 579, -1705, 555, -554, 604, -1679, 558, -551, 582, -1701, 558, -1702, 561, -1698, 580]
+  - platform: template
+    name: "DeshmanLed Warm"
+    on_press:
+      - remote_transmitter.transmit_raw:
+          carrier_frequency: 38kHz
+          code: [9143, -4489, 578, -560, 576, -560, 575, -562, 574, -561, 574, -561, 577, -560, 575, -560, 576, -560, 572, -1717, 551, -1710, 551, -1711, 553, -1708, 550, -1712, 548, -1713, 549, -1713, 553, -1707, 549, -560, 575, -560, 574, -560, 574, -1714, 548, -561, 574, -560, 575, -561, 574, -559, 577, -1712, 549, -1712, 548, -1712, 549, -559, 554, -1734, 549, -1712, 548, -1712, 550, -1711, 550, -39418, 9078, -2283, 581]
+  - platform: template
+    name: "DeshmanLed Cool"
+    on_press:
+      - remote_transmitter.transmit_raw:
+          carrier_frequency: 38kHz
+          code: [9192, -4487, 586, -555, 605, -536, 580, -560, 583, -560, 578, -560, 579, -560, 579, -559, 578, -562, 577, -1714, 556, -1708, 556, -1709, 554, -1709, 552, -1710, 553, -1709, 553, -1709, 551, -1709, 551, -557, 573, -1714, 573, -535, 571, -1714, 550, -1710, 550, -558, 571, -1715, 550, -558, 575, -1712, 574, -533, 577, -1710, 550, -558, 574, -558, 575, -1712, 548, -560, 575, -1710, 550, -39418, 9067, -2262, 577]
+  - platform: template
+    name: "DeshmanLed Bright UP"
+    on_press:
+      - remote_transmitter.transmit_raw:
+          carrier_frequency: 38kHz
+          code: [9164, -4490, 579, -557, 579, -559, 579, -560, 577, -561, 578, -561, 574, -563, 580, -560, 578, -558, 579, -1713, 552, -1712, 551, -1711, 551, -1711, 552, -1711, 552, -1710, 553, -1709, 553, -1711, 551, -558, 579, -558, 581, -1707, 552, -557, 577, -559, 577, -560, 576, -1710, 551, -560, 574, -1712, 549, -1711, 550, -558, 580, -1706, 551, -1709, 550, -1710, 550, -556, 578, -1709, 551, -39412, 9088, -2259, 608]
+  - platform: template
+    name: "DeshmanLed Bright Down"
+    on_press:
+      - remote_transmitter.transmit_raw:
+          carrier_frequency: 38kHz
+          code: [9113, -4488, 580, -557, 574, -561, 575, -564, 571, -562, 575, -562, 573, -562, 574, -562, 575, -561, 574, -1715, 552, -1710, 552, -1709, 553, -1709, 552, -1710, 553, -1708, 553, -1709, 552, -1710, 556, -1705, 553, -1709, 553, -555, 575, -562, 574, -561, 573, -563, 574, -1714, 553, -556, 573, -562, 575, -562, 573, -1715, 552, -1709, 552, -1710, 551, -1711, 552, -556, 573, -1716, 551]
+  # C&H Humidifier
+  - platform: template
+    name: "C&H Humidifier On\Off"
+    on_press:
+      - remote_transmitter.transmit_raw:
+          carrier_frequency: 38kHz
+          code: [9310, -4543, 599, -553, 598, -552, 599, -553, 597, -554, 597, -552, 597, -554, 595, -554, 600, -550, 596, -1709, 573, -1709, 570, -1711, 571, -1711, 572, -1709, 571, -1711, 574, -1709, 572, -1710, 574, -551, 598, -553, 600, -549, 598, -553, 598, -555, 595, -553, 622, -528, 597, -553, 623, -1683, 599, -1684, 575, -1708, 575, -1707, 600, -1683, 598, -1684, 598, -1685, 599, -1683, 601, -39496, 9303, -2277, 623]
+  - platform: template
+    name: "C&H Humidifier Mist+"
+    on_press:
+      - remote_transmitter.transmit_raw:
+          carrier_frequency: 38kHz
+          code: [9190, -4543, 580, -566, 554, -585, 579, -565, 557, -585, 556, -585, 557, -586, 556, -584, 580, -563, 557, -1742, 532, -1742, 556, -1718, 533, -1742, 555, -1719, 532, -1743, 532, -1741, 541, -1734, 555, -564, 581, -559, 582, -561, 583, -1714, 531, -588, 583, -558, 582, -560, 583, -559, 582, -1715, 559, -1715, 558, -1715, 558, -562, 607, -1693, 557, -1712, 557, -1718, 587, -1686, 588, -39485, 9165, -2279, 610]
+  - platform: template
+    name: "C&H Humidifier Light On"
+    on_press:
+      - remote_transmitter.transmit_raw:
+          carrier_frequency: 38kHz
+          code: [9260, -4521, 587, -559, 590, -556, 592, -557, 614, -532, 591, -555, 588, -557, 589, -556, 589, -558, 611, -1666, 588, -1691, 585, -1693, 611, -1665, 612, -1666, 611, -1667, 587, -1691, 586, -1691, 588, -556, 586, -1691, 611, -535, 609, -1668, 586, -558, 580, -565, 611, -534, 580, -564, 588, -1690, 610, -534, 609, -1669, 586, -557, 578, -1699, 586, -1691, 585, -1692, 610, -1666, 584, -39517, 9199, -2281, 609]
+
+
+### END

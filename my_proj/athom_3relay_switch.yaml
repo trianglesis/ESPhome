@@ -1,0 +1,36 @@
+substitutions:
+  name: athom-3gang-switch-89c3bb
+  friendly_name: 3Gang Switch 89c3bb
+packages:
+  Athom Technology.3Gang Switch: github://athom-tech/athom-configs/athom-sw03.yaml
+esphome:
+  name: ${name}
+  name_add_mac_suffix: false
+  friendly_name: ${friendly_name}
+api:
+  encryption:
+    key: b5xdnYWnpI5GROwRtqsPAQlSlRrRGsl2Rip6ijdfUUs=
+
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+# Network info
+sensor:
+  - platform: wifi_signal
+    name: "${friendly_name} WiFi Signal"
+    update_interval: 60s
+
+  - platform: uptime
+    name: "${friendly_name} Uptime"
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "${friendly_name} IP Address"
+    ssid:
+      name: "${friendly_name} SSID"
+    bssid:
+      name: "${friendly_name} BSSID"
+    mac_address:
+      name: "${friendly_name} Mac Wifi Address"
