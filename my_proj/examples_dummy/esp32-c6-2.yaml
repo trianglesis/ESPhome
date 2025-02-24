@@ -1,10 +1,10 @@
 substitutions:
-  name: "esp32-c6-1"
-  friendly_name: "ESP32_C6_1"
+  name: "esp32-c6-2"
+  friendly_name: "ESP32_C6_2"
 
 esphome:
-  name: "esp32-c6-1"
-  friendly_name: "ESP32_C6_1"
+  name: "esp32-c6-2"
+  friendly_name: "ESP32_C6_2"
 
 # https://esphome.io/components/esp32
 esp32:
@@ -13,8 +13,7 @@ esp32:
   variant: esp32c6
   framework:
     type: esp-idf
-    # https://github.com/espressif/esp-idf/releases
-    version: "5.4"
+    version: "5.3.1"
     platform_version: 6.9.0
 
 logger:
@@ -40,9 +39,6 @@ web_server:
   sorting_groups:
   - id: sorting_group_controls
     name: "Controls"
-    sorting_weight: 10
-  - id: sorting_group_monitor
-    name: "Sensor monitor"
     sorting_weight: 10
   - id: sorting_group_diagnostic
     name: "Diagnostic info"
@@ -89,7 +85,6 @@ text_sensor:
 sensor:
   - platform: uptime
     name: "${friendly_name} Uptime"
-    update_interval: 60s
     web_server:
           sorting_group_id: sorting_group_diagnostic
 
@@ -109,13 +104,6 @@ sensor:
     device_class: ""
     web_server:
       sorting_group_id: sorting_group_diagnostic
-  
-  # Custom
-  - platform: gpio
-    name: "Pin GPIO23"
-    pin: GPIO23
-    web_server:
-      sorting_group_id: sorting_group_monitor
 
 button:
 - platform: restart

@@ -14,7 +14,8 @@ esp32:
   framework:
     type: esp-idf
     # https://github.com/espressif/esp-idf/releases
-    version: "5.4"
+    # version: "5.4" 
+    version: "5.3.1"
     platform_version: 6.9.0
 
 logger:
@@ -109,16 +110,59 @@ sensor:
     device_class: ""
     web_server:
       sorting_group_id: sorting_group_diagnostic
-  
-  # Custom
-  - platform: gpio
-    name: "Pin GPIO23"
-    pin: GPIO23
-    web_server:
-      sorting_group_id: sorting_group_monitor
 
+output:
+  - platform: gpio
+    pin: GPIO18
+    id: output18
+
+# Button
 button:
 - platform: restart
   name: "Restart"
   web_server:
     sorting_group_id: sorting_group_service
+- platform: template
+  id: blink_led
+  name: "Toggle LED pin 9"
+  on_press:
+    then:
+      - logger.log: Button Pressed
+      - switch.toggle: redLED
+  web_server:
+    sorting_group_id: sorting_group_controls
+- platform: output
+  name: "Button LED pin 18"
+  output: output18
+  duration: 500ms
+  web_server:
+    sorting_group_id: sorting_group_controls
+
+# Example configuration entry
+binary_sensor:
+  # Custom
+  - platform: gpio
+    name: "Pin GPIO2"
+    pin: GPIO2
+    web_server:
+      sorting_group_id: sorting_group_monitor
+
+switch:
+  - platform: gpio
+    pin:
+      number: GPIO9
+      mode: output
+    id: redLED
+    on_turn_on:
+    - logger.log: "Switch Turned On!"
+    on_turn_off:
+    - logger.log: "Switch Turned Off!"
+
+# BLINK
+# interval:
+#   - interval: 5000ms
+#     then:
+#       - switch.toggle: redLED
+
+
+# https://esphome.io/components/button/output
