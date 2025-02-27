@@ -3,12 +3,14 @@ substitutions:
   friendly_name: "ESP32_C6_1"
 
 esphome:
+  # ESP32-C6-WROOM-1-N8
   name: "esp32-c6-1"
   friendly_name: "ESP32_C6_1"
-  # ESP32-C6-WROOM-1-N8
 
 # https://esphome.io/components/esp32.html#id2
 # https://github.com/espressif/esp-idf/releases
+# https://github.com/platformio/platform-espressif32
+# https://docs.platformio.org/en/latest/boards/espressif32/esp32-c6-devkitc-1.html#board-espressif32-esp32-c6-devkitc-1
 esp32:
   board: esp32-c6-devkitc-1
   flash_size: 8MB
@@ -19,24 +21,35 @@ esp32:
       CONFIG_ESPTOOLPY_FLASHSIZE_8MB: y
 
     # Experiments:
-    # version: latest
-    # platform_version: latest
-    # version: "5.4.0"
-    # platform_version: 6.10.0
+    # version: dev
+    # platform_version: dev
+
+    # version: "5.4.0"  # https://github.com/espressif/esp-idf/releases/tag/v5.4
+    # platform_version: 6.10.0  # https://github.com/platformio/platform-espressif32/releases/tag/v6.10.0
+    # platform_version: 6.9.0
+    # platform_version: 6.8.1
 
     # for LED: https://gist.github.com/baldowl/a413c2a08c10bc62c1a72328caac98c1
-    version: 5.1.2 # latest version when tested with ESPHome 2023.11.06
-    platform_version: 6.4.0 # latest version when tested with ESPHome 2023.11.06
+    # version: 5.1.2 # latest version when tested with ESPHome 2023.11.06
+    # platform_version: 6.4.0 # latest version when tested with ESPHome 2023.11.06
+
+    # https://github.com/esphome/issues/issues/5864#issuecomment-2380417718
+    # version: "5.3.0"
+    # platform_version: 6.8.1
+
+    # https://github.com/esphome/issues/issues/5864#issuecomment-2460380038
+    # version: 5.2.1
 
     # Works
-    # version: "5.3.1"
-    # platform_version: 6.9.0
-
-
-
+    # https://www.reddit.com/r/esp32/comments/1fh8nup/comment/lqm1hvh/
+    version: "5.3.1"
+    platform_version: 6.9.0
 
 logger:
   level: DEBUG
+  baud_rate: 115200
+  hardware_uart: USB_SERIAL_JTAG
+
 ota:
   - platform: esphome
     password: !secret ota_password
@@ -49,6 +62,9 @@ wifi:
     password: !secret fall_back_wifi_password
   reboot_timeout: 900s
   fast_connect: true
+api:
+  encryption:
+    key: !secret api_key
 
 captive_portal:
 
@@ -128,23 +144,48 @@ sensor:
     web_server:
       sorting_group_id: sorting_group_diagnostic
 
+esp32_ble_tracker:
+  scan_parameters:
+    interval: 1100ms
+    window: 1100ms
+    active: true
+
+bluetooth_proxy:
+  active: true
+
+
+uart:
+  rx_pin: 22
+  tx_pin: 21
+  baud_rate: 9600
+
+i2c:
+  id: bus_a
+  setup_priority: -100 # fix for interfering with wifi!
+  sda: 6
+  scl: 7
+  scan: false # workaround as true blocks - it wwould not even do a recovery on i2c
+
 output:
   # https://esphome.io/guides/configuration-types#config-pin-schema
   - platform: gpio
     pin: 
         number: GPIO02
         allow_other_uses: true
-    id: output02
+    id: output2
+
   - platform: gpio
     pin: 
         number: GPIO09
         allow_other_uses: true
-    id: output09
+    id: output9
+    
   - platform: gpio
     pin: 
         number: GPIO18
         allow_other_uses: true
     id: output18
+
   # Onboard LED
   - platform: gpio
     pin: 
@@ -154,7 +195,7 @@ output:
         mode:
           input: true
           pullup: true
-    id: output08
+    id: output8
 
 # https://esphome.io/components/light/spi_led_strip
 # spi:
@@ -174,7 +215,7 @@ button:
   on_press:
     then:
       - logger.log: Button Pressed
-      - switch.toggle: pin_GPIO9
+      - switch.toggle: pin_GPIO09
   web_server:
     sorting_group_id: sorting_group_controls
 
@@ -185,76 +226,59 @@ button:
   web_server:
     sorting_group_id: sorting_group_controls
 
-- platform: template
-  id: led_onboard
-  name: "${friendly_name} LED (GPIO08)"
-  on_press:
-    then:
-      - logger.log: Button Pressed
-      - switch.toggle: led_switch
-  web_server:
-    sorting_group_id: sorting_group_controls
-
 light:
   - platform: binary
-    name: "${friendly_name} Light LED (GPIO08)"
-    output: output08
+    name: "${friendly_name} LED (GPIO08) - platform light"
+    output: output8
 
   # # https://esphome.io/components/light/esp32_rmt_led_strip
-  # https://forum.mylocalbytes.com/d/162-localdeck-this-feature-is-not-available-for-the-idf-framework-version-5
-  # - platform: esp32_rmt_led_strip
-  #   rgb_order: RGB
-  #   # rgb_order: GRB
-  #   pin: GPIO08
-  #   num_leds: 1
-  #   rmt_channel: 0
-  #   chipset: ws2812
-  #   name: "${friendly_name} RTM LED Light"
-  #   web_server:
-  #     sorting_group_id: sorting_group_controls
-  
-  # # https://esphome.io/components/light/beken_spi_led_strip.html#configuration-variables
-  # #   Component light.beken_spi_led_strip requires component libretiny.
-  # - platform: beken_spi_led_strip
-  #   rgb_order: GRB
-  #   pin: GPIO08
-  #   num_leds: 1
-  #   name: "${friendly_name} Beken LED Light"
-
-  # # https://esphome.io/components/light/spi_led_strip
-  # - platform: spi_led_strip
-  #   num_leds: 1
-  #   id: spi_led_onboard
-  #   name: "${friendly_name} SPI LED Light"
-  #   data_rate: 1MHz
+  # # https://forum.mylocalbytes.com/d/162-localdeck-this-feature-is-not-available-for-the-idf-framework-version-5 
+  # # https://www.reddit.com/r/esp32/comments/1fh8nup/comment/meeu3em/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+  - platform: esp32_rmt_led_strip
+    name: "${friendly_name} RTM LED Light"
+    id: onboard_led
+    rgb_order: GRB
+    pin:
+      number: GPIO08
+      allow_other_uses: true
+    num_leds: 1
+    chipset: WS2812 # actually WS2812B
+    is_rgbw: true
+    icon: "mdi:led-outline"
+    effects:
+      - random:
+      - flicker:
+      - addressable_rainbow:
+    web_server:
+      sorting_group_id: sorting_group_controls
 
 
 switch:
   - platform: gpio
-    id: pin_GPIO2
-    name: "${friendly_name} PIN (GPIO2)"
+    id: pin_GPIO02
+    name: "${friendly_name} PIN (GPIO02)"
     pin:
-      number: GPIO2
+      number: GPIO02
       mode: output
       allow_other_uses: true
       inverted: false
     on_turn_on:
-    - logger.log: "Switch (GPIO2) Turned On!"
+    - logger.log: "Switch (GPIO02) Turned On!"
     on_turn_off:
-    - logger.log: "Switch (GPIO2) Turned Off!"
+    - logger.log: "Switch (GPIO02) Turned Off!"
 
   - platform: gpio
-    id: pin_GPIO9
-    name: "${friendly_name} PIN (GPIO9)"
+    id: pin_GPIO09
+    name: "${friendly_name} PIN (GPIO09)"
     pin:
-      number: GPIO9
+      number: GPIO09
       mode: output
       allow_other_uses: true
       inverted: false
     on_turn_on:
-    - logger.log: "Switch (GPIO9) Turned On!"
+    - logger.log: "Switch (GPIO09) Turned On!"
     on_turn_off:
-    - logger.log: "Switch (GPIO9) Turned Off!"
+    - logger.log: "Switch (GPIO09) Turned Off!"
 
   - platform: gpio
     id: pin_GPIO18
@@ -275,7 +299,8 @@ switch:
     pin:
       number: GPIO08
       allow_other_uses: true
-      inverted: false
+      inverted: yes
+    restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
     - logger.log: "LED (GPIO08) Turned On!"
     on_turn_off:
@@ -283,17 +308,17 @@ switch:
 
 binary_sensor:
   - platform: gpio
-    name: "Pin GPIO2"
+    name: "Pin GPIO02"
     pin:
-      number: GPIO2
+      number: GPIO02
       allow_other_uses: true
     web_server:
       sorting_group_id: sorting_group_monitor
 
   - platform: gpio
-    name: "Pin GPIO9"
+    name: "Pin GPIO09"
     pin:
-      number: GPIO9
+      number: GPIO09
       allow_other_uses: true
     web_server:
       sorting_group_id: sorting_group_monitor
