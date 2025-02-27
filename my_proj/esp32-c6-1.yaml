@@ -62,11 +62,24 @@ wifi:
     password: !secret fall_back_wifi_password
   reboot_timeout: 900s
   fast_connect: true
-api:
-  encryption:
-    key: !secret api_key
+
+# Skip for faster use
+# api:
+  # encryption:
+    # key: !secret api_key
 
 captive_portal:
+
+# # Slow start
+# esp32_ble_tracker:
+#   scan_parameters:
+#     interval: 1100ms
+#     window: 1100ms
+#     active: true
+
+# bluetooth_proxy:
+#   active: true
+
 
 web_server:
   port: 80
@@ -144,119 +157,154 @@ sensor:
     web_server:
       sorting_group_id: sorting_group_diagnostic
 
-esp32_ble_tracker:
-  scan_parameters:
-    interval: 1100ms
-    window: 1100ms
-    active: true
-
-bluetooth_proxy:
-  active: true
-
-
 uart:
-  rx_pin: 22
-  tx_pin: 21
+  tx_pin: GPIO16
+  rx_pin: GPIO17
   baud_rate: 9600
 
-i2c:
-  id: bus_a
-  setup_priority: -100 # fix for interfering with wifi!
-  sda: 6
-  scl: 7
-  scan: false # workaround as true blocks - it wwould not even do a recovery on i2c
+# # Led is uncontrollable
+spi:
+  mosi_pin:
+    number: GPIO08
+    allow_other_uses: true
+  clk_pin:
+    number: GPIO06
+
+# i2c:
+#   id: bus_a
+#   setup_priority: -100 # fix for interfering with wifi!
+#   sda: GPIO20
+#   scl: GPIO21
+#   scan: false # workaround as true blocks - it wwould not even do a recovery on i2c
 
 output:
   # https://esphome.io/guides/configuration-types#config-pin-schema
   - platform: gpio
+    id: output_GPIO02
     pin: 
         number: GPIO02
         allow_other_uses: true
-    id: output2
 
+  # # Led is uncontrollable
+  # # Onboard LED
   - platform: gpio
-    pin: 
-        number: GPIO09
-        allow_other_uses: true
-    id: output9
-    
-  - platform: gpio
-    pin: 
-        number: GPIO18
-        allow_other_uses: true
-    id: output18
-
-  # Onboard LED
-  - platform: gpio
+    id: output_GPIO08
     pin: 
         number: GPIO08
         allow_other_uses: true
         inverted: true
-        mode:
-          input: true
-          pullup: true
-    id: output8
+        # mode:
+          # input: true
+          # pullup: true
 
-# https://esphome.io/components/light/spi_led_strip
-# spi:
-#   mosi_pin: GPIO08
-#   clk_pin: GPIO07
+  - platform: gpio
+    id: output_GPIO09
+    pin: 
+        number: GPIO09
+        allow_other_uses: true
+    
+  - platform: gpio
+    id: output_GPIO18
+    pin: 
+        number: GPIO18
+        allow_other_uses: true
 
 # Button
 button:
 - platform: restart
+  id: button_restart
   name: "Restart"
   web_server:
     sorting_group_id: sorting_group_service
 
 - platform: template
-  id: blink_led
-  name: "Toggle LED pin 9"
+  id: button_GPIO08
+  name: "Button (GPIO08)"
   on_press:
     then:
-      - logger.log: Button Pressed
+      - logger.log: Button Pressed GPIO08
+      - switch.toggle: pin_GPIO08
+  web_server:
+    sorting_group_id: sorting_group_controls
+
+- platform: output
+  id: button_GPIO08_time
+  name: "Button (GPIO08) 500ms"
+  output: output_GPIO08
+  duration: 500ms
+  on_press:
+    then:
+      - logger.log: Button Pressed GPIO08 with time
+  web_server:
+    sorting_group_id: sorting_group_controls
+
+- platform: template
+  id: button_GPIO09
+  name: "Button (GPIO09)"
+  on_press:
+    then:
+      - logger.log: Button Pressed GPIO09
       - switch.toggle: pin_GPIO09
   web_server:
     sorting_group_id: sorting_group_controls
 
 - platform: output
-  name: "Button LED pin 18"
-  output: output18
+  id: button_GPIO18
+  name: "Button (GPIO18) 500ms"
+  output: output_GPIO18
   duration: 500ms
+  on_press:
+    then:
+      - logger.log: Button Pressed GPIO18
   web_server:
     sorting_group_id: sorting_group_controls
 
 light:
   - platform: binary
-    name: "${friendly_name} LED (GPIO08) - platform light"
-    output: output8
+    name: "LED (GPIO08) platform light"
+    output: output_GPIO08
 
+  # # Led is uncontrollable
   # # https://esphome.io/components/light/esp32_rmt_led_strip
   # # https://forum.mylocalbytes.com/d/162-localdeck-this-feature-is-not-available-for-the-idf-framework-version-5 
-  # # https://www.reddit.com/r/esp32/comments/1fh8nup/comment/meeu3em/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
-  - platform: esp32_rmt_led_strip
-    name: "${friendly_name} RTM LED Light"
-    id: onboard_led
-    rgb_order: GRB
-    pin:
-      number: GPIO08
-      allow_other_uses: true
+  # # https://gist.github.com/baldowl/a413c2a08c10bc62c1a72328caac98c1
+  # # https://www.reddit.com/r/esp32/comments/1fh8nup/comment/meeu3em/
+  # - platform: esp32_rmt_led_strip
+  #   name: "RTM LED Light"
+  #   id: onboard_led
+  #   rgb_order: GRB
+  #   pin:
+  #     number: GPIO08
+  #     allow_other_uses: true
+  #   num_leds: 1
+  #   # chipset: WS2812 # actually WS2812B
+  #   bit0_high: 1s # (Optional, Time): The time to hold the data line high for a 0 bit.
+  #   bit0_low: 1s # (Optional, Time): The time to hold the data line low for a 0 bit.
+  #   bit1_high: 1s # (Optional, Time): The time to hold the data line high for a 1 bit.
+  #   bit1_low: 1s # (Optional, Time): The time to hold the data line low for a 1 bit.
+  #   reset_high: 0s # (Optional, Time): The time to hold the data line high after writing the state. Defaults to 0 us.
+  #   reset_low: 0s # (Optional, Time): The time to hold the data line low after writing the state. Defaults to 0 us.
+  #   icon: "mdi:led-outline"
+  #   effects:
+  #     - random:
+  #     - flicker:
+  #     - addressable_rainbow:
+  #   web_server:
+  #     sorting_group_id: sorting_group_controls
+
+  # # Led is uncontrollable
+  # # https://esphome.io/components/light/spi_led_strip
+  - platform: spi_led_strip
     num_leds: 1
-    chipset: WS2812 # actually WS2812B
-    is_rgbw: true
-    icon: "mdi:led-outline"
-    effects:
-      - random:
-      - flicker:
-      - addressable_rainbow:
-    web_server:
-      sorting_group_id: sorting_group_controls
+    id: rgb_led
+    name: "RGB LED Strip"
+    data_rate: 1MHz
 
 
 switch:
   - platform: gpio
     id: pin_GPIO02
-    name: "${friendly_name} PIN (GPIO02)"
+    name: "(GPIO02)"
     pin:
       number: GPIO02
       mode: output
@@ -269,7 +317,7 @@ switch:
 
   - platform: gpio
     id: pin_GPIO09
-    name: "${friendly_name} PIN (GPIO09)"
+    name: "(GPIO09)"
     pin:
       number: GPIO09
       mode: output
@@ -282,7 +330,7 @@ switch:
 
   - platform: gpio
     id: pin_GPIO18
-    name: "${friendly_name} PIN (GPIO18)"
+    name: "(GPIO18)"
     pin:
       number: GPIO18
       mode: output
@@ -294,8 +342,8 @@ switch:
     - logger.log: "Switch (GPIO18) Turned Off!"
   
   - platform: gpio
-    name: "${friendly_name} LED (GPIO08)"
-    id: led_switch
+    name: "(GPIO08) LED"
+    id: pin_GPIO08
     pin:
       number: GPIO08
       allow_other_uses: true
@@ -308,7 +356,7 @@ switch:
 
 binary_sensor:
   - platform: gpio
-    name: "Pin GPIO02"
+    name: "(GPIO02)"
     pin:
       number: GPIO02
       allow_other_uses: true
@@ -316,7 +364,15 @@ binary_sensor:
       sorting_group_id: sorting_group_monitor
 
   - platform: gpio
-    name: "Pin GPIO09"
+    name: "(GPIO08) LED"
+    pin:
+      number: GPIO08
+      allow_other_uses: true
+    web_server:
+      sorting_group_id: sorting_group_monitor
+
+  - platform: gpio
+    name: "(GPIO09)"
     pin:
       number: GPIO09
       allow_other_uses: true
@@ -324,17 +380,11 @@ binary_sensor:
       sorting_group_id: sorting_group_monitor
 
   - platform: gpio
-    name: "Pin GPIO18"
+    name: "(GPIO18)"
     pin:
       number: GPIO18
       allow_other_uses: true
     web_server:
       sorting_group_id: sorting_group_monitor
       
-  - platform: gpio
-    name: "LED (GPIO08)"
-    pin:
-      number: GPIO08
-      allow_other_uses: true
-    web_server:
-      sorting_group_id: sorting_group_monitor
+      
