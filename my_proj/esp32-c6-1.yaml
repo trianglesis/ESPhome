@@ -6,17 +6,23 @@ esphome:
   name: "esp32-c6-1"
   friendly_name: "ESP32_C6_1"
 
-# https://esphome.io/components/esp32
+# https://esphome.io/components/esp32.html#id2
+# https://github.com/espressif/esp-idf/releases
 esp32:
   board: esp32-c6-devkitc-1
   flash_size: 4MB
   variant: esp32c6
   framework:
     type: esp-idf
-    # https://github.com/espressif/esp-idf/releases
-    # version: "5.4" 
-    version: "5.3.1"
-    platform_version: 6.9.0
+    
+    # Experiments:
+    version: "5.4.0"
+    platform_version: 6.10.0
+
+    # Works
+    # version: "5.3.1"
+    # platform_version: 6.9.0
+
 
 logger:
   level: DEBUG
@@ -115,6 +121,10 @@ output:
   - platform: gpio
     pin: GPIO18
     id: output18
+# https://esphome.io/components/light/spi_led_strip
+# spi:
+#   mosi_pin: GPIO08
+#   clk_pin: GPIO07
 
 # Button
 button:
@@ -138,14 +148,33 @@ button:
   web_server:
     sorting_group_id: sorting_group_controls
 
-# Example configuration entry
-binary_sensor:
-  # Custom
-  - platform: gpio
-    name: "Pin GPIO2"
-    pin: GPIO2
+light:
+    # # https://esphome.io/components/light/esp32_rmt_led_strip
+  - platform: esp32_rmt_led_strip
+    rgb_order: RGB
+    pin: GPIO08
+    num_leds: 1
+    rmt_channel: 0
+    chipset: WS2812
+    name: "${friendly_name} RTM LED Light"
     web_server:
-      sorting_group_id: sorting_group_monitor
+      sorting_group_id: sorting_group_controls
+  
+  # # https://esphome.io/components/light/beken_spi_led_strip.html#configuration-variables
+  # #   Component light.beken_spi_led_strip requires component libretiny.
+  - platform: beken_spi_led_strip
+    rgb_order: GRB
+    pin: GPIO08
+    num_leds: 1
+    name: "${friendly_name} Beken LED Light"
+
+  # # https://esphome.io/components/light/spi_led_strip
+  # - platform: spi_led_strip
+  #   num_leds: 1
+  #   id: rgb_led
+  #   name: "${friendly_name} SPI LED Light"
+  #   data_rate: 1MHz
+
 
 switch:
   - platform: gpio
@@ -158,11 +187,9 @@ switch:
     on_turn_off:
     - logger.log: "Switch Turned Off!"
 
-# BLINK
-# interval:
-#   - interval: 5000ms
-#     then:
-#       - switch.toggle: redLED
-
-
-# https://esphome.io/components/button/output
+binary_sensor:
+  - platform: gpio
+    name: "Pin GPIO2"
+    pin: GPIO2
+    web_server:
+      sorting_group_id: sorting_group_monitor
