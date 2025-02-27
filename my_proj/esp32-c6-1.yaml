@@ -5,23 +5,34 @@ substitutions:
 esphome:
   name: "esp32-c6-1"
   friendly_name: "ESP32_C6_1"
+  # ESP32-C6-WROOM-1-N8
 
 # https://esphome.io/components/esp32.html#id2
 # https://github.com/espressif/esp-idf/releases
 esp32:
   board: esp32-c6-devkitc-1
-  flash_size: 4MB
+  flash_size: 8MB
   variant: esp32c6
   framework:
     type: esp-idf
-    
+    sdkconfig_options:
+      CONFIG_ESPTOOLPY_FLASHSIZE_8MB: y
+
     # Experiments:
-    version: "5.4.0"
-    platform_version: 6.10.0
+    # version: latest
+    # platform_version: latest
+    # version: "5.4.0"
+    # platform_version: 6.10.0
+
+    # for LED: https://gist.github.com/baldowl/a413c2a08c10bc62c1a72328caac98c1
+    version: 5.1.2 # latest version when tested with ESPHome 2023.11.06
+    platform_version: 6.4.0 # latest version when tested with ESPHome 2023.11.06
 
     # Works
     # version: "5.3.1"
     # platform_version: 6.9.0
+
+
 
 
 logger:
@@ -118,9 +129,33 @@ sensor:
       sorting_group_id: sorting_group_diagnostic
 
 output:
+  # https://esphome.io/guides/configuration-types#config-pin-schema
   - platform: gpio
-    pin: GPIO18
+    pin: 
+        number: GPIO02
+        allow_other_uses: true
+    id: output02
+  - platform: gpio
+    pin: 
+        number: GPIO09
+        allow_other_uses: true
+    id: output09
+  - platform: gpio
+    pin: 
+        number: GPIO18
+        allow_other_uses: true
     id: output18
+  # Onboard LED
+  - platform: gpio
+    pin: 
+        number: GPIO08
+        allow_other_uses: true
+        inverted: true
+        mode:
+          input: true
+          pullup: true
+    id: output08
+
 # https://esphome.io/components/light/spi_led_strip
 # spi:
 #   mosi_pin: GPIO08
@@ -132,15 +167,17 @@ button:
   name: "Restart"
   web_server:
     sorting_group_id: sorting_group_service
+
 - platform: template
   id: blink_led
   name: "Toggle LED pin 9"
   on_press:
     then:
       - logger.log: Button Pressed
-      - switch.toggle: redLED
+      - switch.toggle: pin_GPIO9
   web_server:
     sorting_group_id: sorting_group_controls
+
 - platform: output
   name: "Button LED pin 18"
   output: output18
@@ -148,48 +185,131 @@ button:
   web_server:
     sorting_group_id: sorting_group_controls
 
+- platform: template
+  id: led_onboard
+  name: "${friendly_name} LED (GPIO08)"
+  on_press:
+    then:
+      - logger.log: Button Pressed
+      - switch.toggle: led_switch
+  web_server:
+    sorting_group_id: sorting_group_controls
+
 light:
-    # # https://esphome.io/components/light/esp32_rmt_led_strip
-  - platform: esp32_rmt_led_strip
-    rgb_order: RGB
-    pin: GPIO08
-    num_leds: 1
-    rmt_channel: 0
-    chipset: WS2812
-    name: "${friendly_name} RTM LED Light"
-    web_server:
-      sorting_group_id: sorting_group_controls
+  - platform: binary
+    name: "${friendly_name} Light LED (GPIO08)"
+    output: output08
+
+  # # https://esphome.io/components/light/esp32_rmt_led_strip
+  # https://forum.mylocalbytes.com/d/162-localdeck-this-feature-is-not-available-for-the-idf-framework-version-5
+  # - platform: esp32_rmt_led_strip
+  #   rgb_order: RGB
+  #   # rgb_order: GRB
+  #   pin: GPIO08
+  #   num_leds: 1
+  #   rmt_channel: 0
+  #   chipset: ws2812
+  #   name: "${friendly_name} RTM LED Light"
+  #   web_server:
+  #     sorting_group_id: sorting_group_controls
   
   # # https://esphome.io/components/light/beken_spi_led_strip.html#configuration-variables
   # #   Component light.beken_spi_led_strip requires component libretiny.
-  - platform: beken_spi_led_strip
-    rgb_order: GRB
-    pin: GPIO08
-    num_leds: 1
-    name: "${friendly_name} Beken LED Light"
+  # - platform: beken_spi_led_strip
+  #   rgb_order: GRB
+  #   pin: GPIO08
+  #   num_leds: 1
+  #   name: "${friendly_name} Beken LED Light"
 
   # # https://esphome.io/components/light/spi_led_strip
   # - platform: spi_led_strip
   #   num_leds: 1
-  #   id: rgb_led
+  #   id: spi_led_onboard
   #   name: "${friendly_name} SPI LED Light"
   #   data_rate: 1MHz
 
 
 switch:
   - platform: gpio
+    id: pin_GPIO2
+    name: "${friendly_name} PIN (GPIO2)"
+    pin:
+      number: GPIO2
+      mode: output
+      allow_other_uses: true
+      inverted: false
+    on_turn_on:
+    - logger.log: "Switch (GPIO2) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO2) Turned Off!"
+
+  - platform: gpio
+    id: pin_GPIO9
+    name: "${friendly_name} PIN (GPIO9)"
     pin:
       number: GPIO9
       mode: output
-    id: redLED
+      allow_other_uses: true
+      inverted: false
     on_turn_on:
-    - logger.log: "Switch Turned On!"
+    - logger.log: "Switch (GPIO9) Turned On!"
     on_turn_off:
-    - logger.log: "Switch Turned Off!"
+    - logger.log: "Switch (GPIO9) Turned Off!"
+
+  - platform: gpio
+    id: pin_GPIO18
+    name: "${friendly_name} PIN (GPIO18)"
+    pin:
+      number: GPIO18
+      mode: output
+      allow_other_uses: true
+      inverted: false
+    on_turn_on:
+    - logger.log: "Switch (GPIO18) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO18) Turned Off!"
+  
+  - platform: gpio
+    name: "${friendly_name} LED (GPIO08)"
+    id: led_switch
+    pin:
+      number: GPIO08
+      allow_other_uses: true
+      inverted: false
+    on_turn_on:
+    - logger.log: "LED (GPIO08) Turned On!"
+    on_turn_off:
+    - logger.log: "LED (GPIO08) Turned Off!"
 
 binary_sensor:
   - platform: gpio
     name: "Pin GPIO2"
-    pin: GPIO2
+    pin:
+      number: GPIO2
+      allow_other_uses: true
+    web_server:
+      sorting_group_id: sorting_group_monitor
+
+  - platform: gpio
+    name: "Pin GPIO9"
+    pin:
+      number: GPIO9
+      allow_other_uses: true
+    web_server:
+      sorting_group_id: sorting_group_monitor
+
+  - platform: gpio
+    name: "Pin GPIO18"
+    pin:
+      number: GPIO18
+      allow_other_uses: true
+    web_server:
+      sorting_group_id: sorting_group_monitor
+      
+  - platform: gpio
+    name: "LED (GPIO08)"
+    pin:
+      number: GPIO08
+      allow_other_uses: true
     web_server:
       sorting_group_id: sorting_group_monitor
