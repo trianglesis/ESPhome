@@ -45,6 +45,16 @@ esp32:
     version: "5.3.1"
     platform_version: 6.9.0
 
+#This is to make sure adc compiles or else it will throw an error
+external_components:
+  - source:
+      # https://github.com/lboue/esphome/blob/adc_oneshot/esphome/components/adc
+      type: git
+      url: https://github.com/lboue/esphome
+      ref: adc_oneshot
+    components: [ adc ]
+    refresh: 0s
+
 logger:
   level: DEBUG
   baud_rate: 115200
@@ -80,7 +90,6 @@ captive_portal:
 # bluetooth_proxy:
 #   active: true
 
-
 web_server:
   port: 80
   version: 3
@@ -91,12 +100,35 @@ web_server:
   - id: sorting_group_monitor
     name: "Sensor monitor"
     sorting_weight: 10
+  - id: sorting_group_calibration
+    name: "Calibration"
+    sorting_weight: 50
   - id: sorting_group_diagnostic
     name: "Diagnostic info"
     sorting_weight: 60
   - id: sorting_group_service
     name: "Service"
     sorting_weight: 90
+
+uart:
+  tx_pin: GPIO16
+  rx_pin: GPIO17
+  baud_rate: 9600
+
+# # Led is uncontrollable
+# spi:
+#   mosi_pin:
+#     number: GPIO08
+#     allow_other_uses: true
+#   clk_pin:
+#     number: GPIO06
+
+i2c:
+  id: bus_a
+  setup_priority: -100 # fix for interfering with wifi!
+  sda: GPIO06
+  scl: GPIO07
+  scan: False # workaround as true blocks - it wwould not even do a recovery on i2c
 
 text_sensor:
   - platform: wifi_info
@@ -157,34 +189,33 @@ sensor:
     web_server:
       sorting_group_id: sorting_group_diagnostic
 
-uart:
-  tx_pin: GPIO16
-  rx_pin: GPIO17
-  baud_rate: 9600
+  # https://github.com/esphome/issues/issues/5363#issuecomment-2269543371
+  - platform: adc
+    pin: GPIO04
+    name: "Gas ADC (CO)"
+    update_interval: 1s
+    filters:
+      - multiply: 3.3
+    accuracy_decimals: 4
+    unit_of_measurement: V
+    id: sensor_volt_co
+    web_server:
+      sorting_group_id: sorting_group_calibration
 
-# # Led is uncontrollable
-spi:
-  mosi_pin:
-    number: GPIO08
-    allow_other_uses: true
-  clk_pin:
-    number: GPIO06
-
-# i2c:
-#   id: bus_a
-#   setup_priority: -100 # fix for interfering with wifi!
-#   sda: GPIO20
-#   scl: GPIO21
-#   scan: false # workaround as true blocks - it wwould not even do a recovery on i2c
+  - platform: adc
+    pin: GPIO05
+    name: "Gas ADC (Alcohol)"
+    update_interval: 1s
+    filters:
+      - multiply: 3.3
+    accuracy_decimals: 4
+    unit_of_measurement: V
+    id: sensor_volt_alco
+    web_server:
+      sorting_group_id: sorting_group_calibration
 
 output:
   # https://esphome.io/guides/configuration-types#config-pin-schema
-  - platform: gpio
-    id: output_GPIO02
-    pin: 
-        number: GPIO02
-        allow_other_uses: true
-
   # # Led is uncontrollable
   # # Onboard LED
   - platform: gpio
@@ -192,17 +223,20 @@ output:
     pin: 
         number: GPIO08
         allow_other_uses: true
-        inverted: true
-        # mode:
-          # input: true
-          # pullup: true
+        mode:
+          output: true
+          pulldown: true
 
   - platform: gpio
     id: output_GPIO09
     pin: 
         number: GPIO09
         allow_other_uses: true
-    
+        inverted: true
+        mode:
+          input: true
+          pullup: true
+
   - platform: gpio
     id: output_GPIO18
     pin: 
@@ -217,26 +251,26 @@ button:
   web_server:
     sorting_group_id: sorting_group_service
 
-- platform: template
-  id: button_GPIO08
-  name: "Button (GPIO08)"
-  on_press:
-    then:
-      - logger.log: Button Pressed GPIO08
-      - switch.toggle: pin_GPIO08
-  web_server:
-    sorting_group_id: sorting_group_controls
+# - platform: template
+#   id: button_GPIO08
+#   name: "Button (GPIO08)"
+#   on_press:
+#     then:
+#       - logger.log: Button Pressed GPIO08
+#       - switch.toggle: pin_GPIO08
+#   web_server:
+#     sorting_group_id: sorting_group_controls
 
-- platform: output
-  id: button_GPIO08_time
-  name: "Button (GPIO08) 500ms"
-  output: output_GPIO08
-  duration: 500ms
-  on_press:
-    then:
-      - logger.log: Button Pressed GPIO08 with time
-  web_server:
-    sorting_group_id: sorting_group_controls
+# - platform: output
+#   id: button_GPIO08_time
+#   name: "Button (GPIO08) 500ms"
+#   output: output_GPIO08
+#   duration: 500ms
+#   on_press:
+#     then:
+#       - logger.log: Button Pressed GPIO08 with time
+#   web_server:
+#     sorting_group_id: sorting_group_controls
 
 - platform: template
   id: button_GPIO09
@@ -294,27 +328,20 @@ light:
 
   # # Led is uncontrollable
   # # https://esphome.io/components/light/spi_led_strip
-  - platform: spi_led_strip
-    num_leds: 1
-    id: rgb_led
-    name: "RGB LED Strip"
-    data_rate: 1MHz
-
+  # - platform: spi_led_strip
+  #   num_leds: 1
+  #   id: rgb_led
+  #   name: "SPI RGB LED Strip (GPIO08)"
+  #   data_rate: 1MHz
+  #   icon: "mdi:led-outline"
+  #   effects:
+  #     - random:
+  #     - flicker:
+  #     - addressable_rainbow:
+  #   web_server:
+  #     sorting_group_id: sorting_group_controls
 
 switch:
-  - platform: gpio
-    id: pin_GPIO02
-    name: "(GPIO02)"
-    pin:
-      number: GPIO02
-      mode: output
-      allow_other_uses: true
-      inverted: false
-    on_turn_on:
-    - logger.log: "Switch (GPIO02) Turned On!"
-    on_turn_off:
-    - logger.log: "Switch (GPIO02) Turned Off!"
-
   - platform: gpio
     id: pin_GPIO09
     name: "(GPIO09)"
@@ -356,14 +383,6 @@ switch:
 
 binary_sensor:
   - platform: gpio
-    name: "(GPIO02)"
-    pin:
-      number: GPIO02
-      allow_other_uses: true
-    web_server:
-      sorting_group_id: sorting_group_monitor
-
-  - platform: gpio
     name: "(GPIO08) LED"
     pin:
       number: GPIO08
@@ -387,4 +406,4 @@ binary_sensor:
     web_server:
       sorting_group_id: sorting_group_monitor
       
-      
+# END
