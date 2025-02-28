@@ -92,6 +92,16 @@ usbipd attach --wsl --busid 11-1
 
 # Working
 
+## Test
+
+```shell
+esphome config my_proj/esp32-c6-1.yaml
+esphome compile my_proj/esp32-c6-1.yaml
+
+# Cant upload from WSL without USB bind
+esphome upload my_proj/esp32-c6-1.yaml
+```
+
 
 ## Start dashboard:
 

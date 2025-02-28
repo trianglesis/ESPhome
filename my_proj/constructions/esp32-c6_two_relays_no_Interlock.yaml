@@ -128,27 +128,36 @@ button:
   web_server:
     sorting_group_id: sorting_group_service
 
-binary_sensor:
+switch:
+  # https://esphome.io/components/switch/gpio.html#gpio-switch
   - platform: gpio
-    name: "PIN (GPIO02)"
+    name: "Switch (GPIO02)"
+    id: pin_GPIO02
     pin:
       number: GPIO02
       inverted: true
-      mode:
-        input: true
-        pullup: true
-    web_server:
-      sorting_group_id: sorting_group_monitor
-    
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO02) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO02) Turned Off!"
+  
   - platform: gpio
-    name: "PIN (GPIO03)"
+    name: "Switch (GPIO03)"
+    id: pin_GPIO03
     pin:
-      number: GPIO03
+      number: GPIO3
       inverted: true
-      mode:
-        input: true
-        pullup: true
-    web_server:
-      sorting_group_id: sorting_group_monitor
-    
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO03) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO03) Turned Off!"
+
 # END
