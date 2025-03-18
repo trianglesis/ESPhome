@@ -88,6 +88,7 @@ globals:
     restore_value: no
     initial_value: '-2.862'
 
+
 #Parameters to model temperature and humidity dependence
   - id: CORA
     type: float

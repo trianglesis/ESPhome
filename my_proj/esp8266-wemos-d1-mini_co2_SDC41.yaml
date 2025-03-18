@@ -51,14 +51,14 @@ web_server:
   version: 3
   sorting_groups:
   - id: sorting_group_co2
-    name: "CO2 Values"
+    name: "CO2 Values (SDC41)"
     sorting_weight: -1
-  - id: sorting_group_calibration
-    name: "MQ Sensor"
-    sorting_weight: 20
   - id: sorting_group_mq_sensor
+    name: "MQ Sensor (MQ-135)"
+    sorting_weight: 10
+  - id: sorting_group_calibration
     name: "Calibration Values"
-    sorting_weight: 30
+    sorting_weight: 40
   - id: sorting_group_diagnostic
     name: "Diagnostic info"
     sorting_weight: 50
@@ -79,7 +79,7 @@ globals:
     restore_value: no
     initial_value: '19.65'
 
-#Calibration resistance at atmospheric CO2 level. Outdoor calibration data
+# Used for CO2 level, now calibrate it with just a clean, non polluted, no dust air.
   - id: RZERO
     type: float
     restore_value: no
@@ -92,23 +92,11 @@ globals:
     restore_value: no
     initial_value: '427'
 
-#Parameters for calculating ppm of CO2 from sensor resistance
-#  Exponential regression:
-#  GAS      | a      | b
-#  CO       | 605.18 | -3.937  
-#  Alcohol  | 77.255 | -3.18 
-#  CO2      | 110.47 | -2.862
-#  Tolueno  | 44.947 | -3.445
-#  NH4      | 102.2  | -2.473
-#  Acetona  | 34.668 | -3.369
-  - id: PARA
+# MQ-135 actual voltage from board
+  - id: volt_resolution
     type: float
     restore_value: no
-    initial_value: '110.47'
-  - id: PARB
-    type: float
-    restore_value: no
-    initial_value: '-2.862'
+    initial_value: '5.14'
 
 #Parameters to model temperature and humidity dependence
   - id: CORA
@@ -140,17 +128,6 @@ globals:
     restore_value: no
     initial_value: '1.130128205'
 
-# Here you need to indicate the supply voltage of the MQ135 sensor. It can be measured with a voltmeter. Please note that the rated power will not always be accurate.
-  - id: volt_resolution
-    type: float
-    restore_value: no
-    initial_value: '5.14'
-
-# 1 for Exponential, 2 for Linear
-  - id: regression_method
-    type: int
-    restore_value: no
-    initial_value: '1'
 sensor:
   # https://esphome.io/components/sensor/scd4x.html#configuration-variables
   # https://esphome.io/components/sensor/index.html#sensor-filters
@@ -181,7 +158,7 @@ sensor:
       - skip_initial: 3
       web_server:
         sorting_group_id: sorting_group_co2
-    update_interval: 5s
+    update_interval: 1s
 
   # Store values for some time
   # 15 min
@@ -195,8 +172,9 @@ sensor:
     update_interval: 60s
     filters:
       - sliding_window_moving_average:
-          window_size: 15
+          window_size: 30
           send_every: 1
+          send_first_at: 1
   # 1 hour
   - platform: template
     name: "CO2 ppm 1h average"
@@ -210,6 +188,7 @@ sensor:
       - sliding_window_moving_average:
           window_size: 60
           send_every: 1
+          send_first_at: 1
   # 24 hours
   - platform: template
     name: "CO2 ppm 24h average"
@@ -223,19 +202,20 @@ sensor:
       - sliding_window_moving_average:
           window_size: 1440
           send_every: 1
+          send_first_at: 1
 
-  # MQ-135 as AQI
+  # MQ-135 as AQI, just voltage
   - platform: adc
     pin: A0
     name: "Gas ADC"
-    update_interval: 1s
+    update_interval: 2s
     filters:
       - multiply: 3.3 # for NodeMcu ESP8266 v3 Lua
     accuracy_decimals: 4
     unit_of_measurement: V
     id: sensor_volt
     web_server:
-      sorting_group_id: sorting_group_calibration
+      sorting_group_id: sorting_group_mq_sensor
 
   - platform: template
     #Linearization of the temperature dependency curve under and above 20 degree C
@@ -251,11 +231,11 @@ sensor:
       } else {
         return (id(CORE) * id(temperature).state + id(CORF) * id(humidity).state + id(CORG));
       }
-    update_interval: 10s
+    update_interval: 15s
     accuracy_decimals: 6
     id: correction_factor
     web_server:
-      sorting_group_id: sorting_group_calibration
+      sorting_group_id: sorting_group_mq_sensor
 
   - platform: template
     #Get the resistance of the sensor, ie. the measurement value @return The sensor resistance in kOhm
@@ -265,12 +245,12 @@ sensor:
     name: "Resistance"
     lambda: |-
       return ((id(volt_resolution)*id(RLOAD)/id(sensor_volt).state) - id(RLOAD));
-    update_interval: 5s
+    update_interval: 15s
     accuracy_decimals: 3
     unit_of_measurement: kOm
     id: resistance
     web_server:
-      sorting_group_id: sorting_group_calibration
+      sorting_group_id: sorting_group_mq_sensor
     
   - platform: template
     # Get the resistance of the sensor, ie. the measurement value correctedfor temp/hum @return The corrected sensor resistance kOhm
@@ -278,80 +258,12 @@ sensor:
     name: "Corrected Resistance"
     lambda: |-
       return (id(resistance).state / id(correction_factor).state);
-    update_interval: 5s
+    update_interval: 15s
     accuracy_decimals: 3
     unit_of_measurement: kOm
     id: corrected_resistance
     web_server:
-      sorting_group_id: sorting_group_calibration
-
-  - platform: template
-    # Get the ppm of CO2 sensed (assuming only CO2 in the air). The ppm of CO2 in the air
-    #getPPM
-    name: "PPM CO2"
-    lambda: |-
-      if (id(regression_method)==1) {
-        return (id(PARA) * pow((id(resistance).state / id(RZERO)), id(PARB)));
-      } else {
-        return (pow(10, (log10(id(resistance).state / id(RZERO)) - id(PARB)) / id(PARA)));
-      }
-    update_interval: 5s
-    unit_of_measurement: ppm
-    state_class: 'measurement'
-    id: mq_135_ppm_co2
-    web_server:
       sorting_group_id: sorting_group_mq_sensor
-
-  - platform: template
-    # Get the ppm of CO2 sensed (assuming only CO2 in the air), corrected  for temp. The ppm of CO2 in the air
-    #getCorrectedPPM
-    name: "Corrected PPM CO2"
-    lambda: |-
-      if (id(regression_method)==1) {
-        return (id(PARA) * pow((id(corrected_resistance).state / id(RZERO)), id(PARB)));
-      } else {
-        return (pow(10, (log10(id(corrected_resistance).state / id(RZERO)) - id(PARB)) / id(PARA)));
-      }
-    update_interval: 5s
-    unit_of_measurement: ppm
-    state_class: 'measurement'
-    id: mq_135_corrected_ppm_co2
-    web_server:
-      sorting_group_id: sorting_group_mq_sensor
-
-  - platform: template
-    # Get the resistance RZero of the sensor for calibration purposes. The sensor resistance RZero in kOhm
-    #getRZero
-    name: "RZero"
-    lambda: |-
-      return (id(resistance).state / pow((id(ATMOCO2) / id(PARA)), (1./id(PARB))));
-    filters:
-      - sliding_window_moving_average:
-          window_size: 15
-          send_every: 1
-    update_interval: 5s
-    accuracy_decimals: 3
-    unit_of_measurement: kOm
-    id: r_zero
-    web_server:
-      sorting_group_id: sorting_group_calibration
-
-  - platform: template
-    # Get the corrected resistance RZero of the sensor for calibration purposes. The corrected sensor resistance RZERO in kOhm for ATMOCO2 level
-    #getCorrectedRZero
-    name: "CorrectedRZero"
-    lambda: |-
-      return (id(corrected_resistance).state / pow((id(ATMOCO2) / id(PARA)), (1./id(PARB))));
-    filters:
-      - sliding_window_moving_average:
-          window_size: 15
-          send_every: 1
-    update_interval: 5s
-    accuracy_decimals: 3
-    unit_of_measurement: kOm
-    id: corrected_r_zero
-    web_server:
-      sorting_group_id: sorting_group_calibration
 
   - platform: uptime
     name: "${friendly_name} Uptime"
