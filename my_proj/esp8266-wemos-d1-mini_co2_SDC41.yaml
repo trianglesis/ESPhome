@@ -12,6 +12,9 @@ esp8266:
 
 logger:
   level: INFO
+  logs:
+    component: ERROR
+    scd4x.sensor: ERROR
 api:
   encryption:
     key: !secret api_key
@@ -51,8 +54,11 @@ web_server:
     name: "CO2 Values"
     sorting_weight: -1
   - id: sorting_group_calibration
-    name: "Calibration Values"
+    name: "MQ Sensor"
     sorting_weight: 20
+  - id: sorting_group_mq_sensor
+    name: "Calibration Values"
+    sorting_weight: 30
   - id: sorting_group_diagnostic
     name: "Diagnostic info"
     sorting_weight: 50
@@ -65,30 +71,26 @@ i2c:
 
 # Calibrate MQ135 volt and resistance
 globals:
-  #The load resistance on the board. Value in KiloOhms
+
+#The load resistance on the board. Value in KiloOhms
+# Factory rezistor 1k, custom rezistor ~20k soldered manually.
   - id: RLOAD
     type: float
     restore_value: no
-    initial_value: '1.025'
-  # JUST FYI, not for actial CO2 measurement
-  #Calibration resistance at atmospheric CO2 level. Outdoor calibration data
+    initial_value: '19.65'
+
+#Calibration resistance at atmospheric CO2 level. Outdoor calibration data
   - id: RZERO
     type: float
     restore_value: no
-    initial_value: '40.505'
-  
-  #Atmospheric CO2 level for calibration purposes. Outdoor CO2 level during calibration. Usually 450, but it's better to clarify.
-  # https://www.co2.earth/daily-co2
+    initial_value: '44.666'
+
+#Atmospheric CO2 level for calibration purposes. Outdoor CO2 level during calibration. Usually 450, but it's better to clarify.
+# https://www.co2.earth/daily-co2
   - id: ATMOCO2
     type: float
     restore_value: no
     initial_value: '427'
-
-# Here you need to indicate the supply voltage of the MQ135 sensor. It can be measured with a voltmeter. Please note that the rated power will not always be accurate.
-  - id: volt_resolution
-    type: float
-    restore_value: no
-    initial_value: '5.14'
 
 #Parameters for calculating ppm of CO2 from sensor resistance
 #  Exponential regression:
@@ -138,36 +140,95 @@ globals:
     restore_value: no
     initial_value: '1.130128205'
 
+# Here you need to indicate the supply voltage of the MQ135 sensor. It can be measured with a voltmeter. Please note that the rated power will not always be accurate.
+  - id: volt_resolution
+    type: float
+    restore_value: no
+    initial_value: '5.14'
+
+# 1 for Exponential, 2 for Linear
+  - id: regression_method
+    type: int
+    restore_value: no
+    initial_value: '1'
 sensor:
   # https://esphome.io/components/sensor/scd4x.html#configuration-variables
+  # https://esphome.io/components/sensor/index.html#sensor-filters
   - platform: scd4x
-    # i2c_id: bus_a
-    # address: 0x62
+    i2c_id: bus_a
+    address: 0x62
     id: scd41_wemos
     automatic_self_calibration: true
     measurement_mode: periodic
     co2:
       name: "CO2"
       id: "ppm_co2"
+      filters:
+      - skip_initial: 3
       web_server:
         sorting_group_id: sorting_group_co2
     temperature:
       name: "Temperature"
       id: "temperature"
+      filters:
+      - skip_initial: 3
       web_server:
         sorting_group_id: sorting_group_co2
     humidity:
       name: "Humidity"
       id: "humidity"
+      filters:
+      - skip_initial: 3
       web_server:
         sorting_group_id: sorting_group_co2
-    update_interval: 10s
+    update_interval: 5s
+
+  # Store values for some time
+  # 15 min
+  - platform: template
+    name: "CO2 ppm 15min average"
+    id: co2_ppm_15m
+    icon: mdi:molecule-co2
+    unit_of_measurement: ppm
+    lambda: |-
+      return id(ppm_co2).state;
+    update_interval: 60s
+    filters:
+      - sliding_window_moving_average:
+          window_size: 15
+          send_every: 1
+  # 1 hour
+  - platform: template
+    name: "CO2 ppm 1h average"
+    id: co2_ppm_1h
+    icon: mdi:molecule-co2
+    unit_of_measurement: ppm
+    lambda: |-
+      return id(ppm_co2).state;
+    update_interval: 60s
+    filters:
+      - sliding_window_moving_average:
+          window_size: 60
+          send_every: 1
+  # 24 hours
+  - platform: template
+    name: "CO2 ppm 24h average"
+    id: co2_ppm_24h
+    icon: mdi:molecule-co2
+    unit_of_measurement: ppm
+    lambda: |-
+      return id(ppm_co2).state;
+    update_interval: 60s
+    filters:
+      - sliding_window_moving_average:
+          window_size: 1440
+          send_every: 1
 
   # MQ-135 as AQI
   - platform: adc
     pin: A0
     name: "Gas ADC"
-    update_interval: 10s
+    update_interval: 1s
     filters:
       - multiply: 3.3 # for NodeMcu ESP8266 v3 Lua
     accuracy_decimals: 4
@@ -194,7 +255,7 @@ sensor:
     accuracy_decimals: 6
     id: correction_factor
     web_server:
-      sorting_group_id: sorting_group_calibration  
+      sorting_group_id: sorting_group_calibration
 
   - platform: template
     #Get the resistance of the sensor, ie. the measurement value @return The sensor resistance in kOhm
@@ -204,25 +265,59 @@ sensor:
     name: "Resistance"
     lambda: |-
       return ((id(volt_resolution)*id(RLOAD)/id(sensor_volt).state) - id(RLOAD));
-    update_interval: 10s
+    update_interval: 5s
     accuracy_decimals: 3
     unit_of_measurement: kOm
     id: resistance
     web_server:
       sorting_group_id: sorting_group_calibration
-
+    
   - platform: template
     # Get the resistance of the sensor, ie. the measurement value correctedfor temp/hum @return The corrected sensor resistance kOhm
     #getCorrectedResistance
     name: "Corrected Resistance"
     lambda: |-
       return (id(resistance).state / id(correction_factor).state);
-    update_interval: 10s
+    update_interval: 5s
     accuracy_decimals: 3
     unit_of_measurement: kOm
     id: corrected_resistance
     web_server:
       sorting_group_id: sorting_group_calibration
+
+  - platform: template
+    # Get the ppm of CO2 sensed (assuming only CO2 in the air). The ppm of CO2 in the air
+    #getPPM
+    name: "PPM CO2"
+    lambda: |-
+      if (id(regression_method)==1) {
+        return (id(PARA) * pow((id(resistance).state / id(RZERO)), id(PARB)));
+      } else {
+        return (pow(10, (log10(id(resistance).state / id(RZERO)) - id(PARB)) / id(PARA)));
+      }
+    update_interval: 5s
+    unit_of_measurement: ppm
+    state_class: 'measurement'
+    id: mq_135_ppm_co2
+    web_server:
+      sorting_group_id: sorting_group_mq_sensor
+
+  - platform: template
+    # Get the ppm of CO2 sensed (assuming only CO2 in the air), corrected  for temp. The ppm of CO2 in the air
+    #getCorrectedPPM
+    name: "Corrected PPM CO2"
+    lambda: |-
+      if (id(regression_method)==1) {
+        return (id(PARA) * pow((id(corrected_resistance).state / id(RZERO)), id(PARB)));
+      } else {
+        return (pow(10, (log10(id(corrected_resistance).state / id(RZERO)) - id(PARB)) / id(PARA)));
+      }
+    update_interval: 5s
+    unit_of_measurement: ppm
+    state_class: 'measurement'
+    id: mq_135_corrected_ppm_co2
+    web_server:
+      sorting_group_id: sorting_group_mq_sensor
 
   - platform: template
     # Get the resistance RZero of the sensor for calibration purposes. The sensor resistance RZero in kOhm
@@ -234,7 +329,7 @@ sensor:
       - sliding_window_moving_average:
           window_size: 15
           send_every: 1
-    update_interval: 10s
+    update_interval: 5s
     accuracy_decimals: 3
     unit_of_measurement: kOm
     id: r_zero
@@ -251,7 +346,7 @@ sensor:
       - sliding_window_moving_average:
           window_size: 15
           send_every: 1
-    update_interval: 10s
+    update_interval: 5s
     accuracy_decimals: 3
     unit_of_measurement: kOm
     id: corrected_r_zero
@@ -329,3 +424,6 @@ button:
       sorting_group_id: sorting_group_calibration
 
 # END
+# TODO:
+# Add LED for warning as in: https://github.com/RomainGehrig/ESPHome-CO2Sensor/blob/d7d988175a93a0697862aef3b2c9878011eb3fb9/CO2Sensor.yaml#L118
+# OR in https://atlee.ca/posts/co2-esphome/
