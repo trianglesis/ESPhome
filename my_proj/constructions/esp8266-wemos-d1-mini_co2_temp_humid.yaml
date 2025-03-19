@@ -175,7 +175,6 @@ sensor:
         sorting_group_id: sorting_group_co2
     update_interval: 60s
     
-    
   - platform: adc
     pin: A0
     name: "Gas ADC"

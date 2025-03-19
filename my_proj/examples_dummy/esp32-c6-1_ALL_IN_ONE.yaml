@@ -20,6 +20,12 @@ esp32:
     sdkconfig_options:
       CONFIG_ESPTOOLPY_FLASHSIZE_8MB: y
 
+    # Zigbee:
+    # https://github.com/luar123/esphome_zb_sensor
+    # https://github.com/DmytroML/ESP36C6_Zigbee_PZEM-004t
+    # https://github.com/espressif/esp-zigbee-sdk/tree/main/examples
+    # https://github.com/espressif/esp-idf/tree/master/examples/zigbee/light_sample
+
     # Experiments:
     # version: dev
     # platform_version: dev
