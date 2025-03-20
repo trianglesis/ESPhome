@@ -3,10 +3,10 @@ substitutions:
   friendly_name: "ESP32_C6_1"
 
 esphome:
+  # ESP32-C6-WROOM-1-N8
   name: "esp32-c6-1"
   friendly_name: "ESP32_C6_1"
 
-# https://esphome.io/components/esp32
 esp32:
   board: esp32-c6-devkitc-1
   flash_size: 8MB
@@ -20,6 +20,7 @@ esp32:
 
 logger:
   level: DEBUG
+
 ota:
   - platform: esphome
     password: !secret ota_password
@@ -33,6 +34,10 @@ wifi:
   reboot_timeout: 900s
   fast_connect: true
 
+api:
+  encryption:
+    key: !secret api_key
+
 captive_portal:
 
 web_server:
@@ -45,6 +50,9 @@ web_server:
   - id: sorting_group_monitor
     name: "Sensor monitor"
     sorting_weight: 10
+  - id: sorting_group_calibration
+    name: "Calibration"
+    sorting_weight: 50
   - id: sorting_group_diagnostic
     name: "Diagnostic info"
     sorting_weight: 60
@@ -110,16 +118,37 @@ sensor:
     device_class: ""
     web_server:
       sorting_group_id: sorting_group_diagnostic
-  
-  # Custom
-  - platform: gpio
-    name: "Pin GPIO23"
-    pin: GPIO23
-    web_server:
-      sorting_group_id: sorting_group_monitor
 
+
+# Button
 button:
 - platform: restart
+  id: button_restart
   name: "Restart"
   web_server:
     sorting_group_id: sorting_group_service
+
+binary_sensor:
+  - platform: gpio
+    name: "PIN (GPIO02)"
+    pin:
+      number: GPIO02
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    web_server:
+      sorting_group_id: sorting_group_monitor
+    
+  - platform: gpio
+    name: "PIN (GPIO03)"
+    pin:
+      number: GPIO03
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    web_server:
+      sorting_group_id: sorting_group_monitor
+    
+# END
