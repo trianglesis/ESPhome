@@ -27,36 +27,28 @@ external_components:
     components: [ i2c ]
 
 logger:
-  level: INFO
-api:
-  encryption:
-    key: !secret api_key
+  level: DEBUG
+  logs:
+    sensor: INFO
+    component: DEBUG
+    scd4x.sensor: DEBUG
+    esp-idf: INFO
+    template.sensor: WARN
+    text_sensor: WARN
 ota:
   - platform: esphome
     password: !secret ota_password
 wifi:
-  networks:
-    - ssid: !secret wifi_ssid
-      password: !secret wifi_password
-    - ssid: !secret wifi_ssid_portable
-      password: !secret wifi_password_portable
-  # Board will hoist Wifi by itself
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "${friendly_name}"
     password: !secret fall_back_wifi_password
-    manual_ip:
-        static_ip: !secret ap_static_ip_portable
-        gateway: !secret ap_static_gateway
-        subnet: 255.255.255.0
-        dns1: !secret ap_static_dns
-        dns2: 8.8.8.8
-  # When no WifI
   reboot_timeout: 900s
-  # Do not fast connect when portable
-  # fast_connect: true
+  fast_connect: true
 
-# Do not use when portable
-# captive_portal:
+captive_portal:
 
 web_server:
   port: 80
@@ -102,18 +94,6 @@ sensor:
       - skip_initial: 3
       web_server:
         sorting_group_id: sorting_group_co2
-      on_value:
-        then:
-          - lambda: |-
-              float co2 = std::min(float(2000), x);
-              auto t = (co2-440)/(2000 - 440);
-              auto interpolated = ESPHSVColor(uint8_t((1-t)*96), 255, 32);
-              auto inter_rgb = interpolated.to_rgb();
-
-              auto call = id(co2light).turn_on();
-              call.set_rgb(inter_rgb.red / 255.0, inter_rgb.green / 255.0, inter_rgb.blue / 255.0);
-              call.set_brightness(1);
-              call.perform();
     temperature:
       name: "Temperature"
       id: "temperature"
@@ -128,22 +108,8 @@ sensor:
       - skip_initial: 3
       web_server:
         sorting_group_id: sorting_group_co2
-    update_interval: 1s
+    update_interval: 5s
   # Store values for some time
-  # 5 min
-  - platform: template
-    name: "CO2 ppm 5min average"
-    id: co2_ppm_5m
-    icon: mdi:molecule-co2
-    unit_of_measurement: ppm
-    lambda: |-
-      return id(ppm_co2).state;
-    update_interval: 60s
-    filters:
-      - sliding_window_moving_average:
-          window_size: 5
-          send_every: 1
-          send_first_at: 1
   # 15 min
   - platform: template
     name: "CO2 ppm 15min average"
@@ -155,7 +121,7 @@ sensor:
     update_interval: 60s
     filters:
       - sliding_window_moving_average:
-          window_size: 15
+          window_size: 30
           send_every: 1
           send_first_at: 1
   # 1 hour
@@ -250,17 +216,29 @@ button:
     name: "Restart"
     web_server:
       sorting_group_id: sorting_group_service
+  # Calibration actions:
+  - platform: template
+    name: "Calibrate by Atmo CO2 level"
+    on_press:
+      then:
+      - scd4x.perform_forced_calibration:
+          value: 427  # https://www.co2.earth/daily-co2
+          id: scd41_esp32
+    web_server:
+      sorting_group_id: sorting_group_calibration
+
 
 # https://gist.github.com/baldowl/a413c2a08c10bc62c1a72328caac98c1?permalink_comment_id=5496287#gistcomment-5496287
 light:
   - platform: esp32_rmt_led_strip
     name: Status LED
-    id: co2light
     pin: GPIO8
     rgb_order: GRB
     num_leds: 1
     chipset: ws2812
     web_server: 
       sorting_group_id: sorting_group_controls
-
 # END
+# TODO:
+# Add LED for warning as in: https://github.com/RomainGehrig/ESPHome-CO2Sensor/blob/d7d988175a93a0697862aef3b2c9878011eb3fb9/CO2Sensor.yaml#L118
+# OR in https://atlee.ca/posts/co2-esphome/
