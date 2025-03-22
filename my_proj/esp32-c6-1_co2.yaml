@@ -6,8 +6,67 @@ esphome:
   name: "esp32-c6-1"
   friendly_name: "ESP32_C6_1"
   # https://github.com/esphome/esphome/pull/1651
+  # https://github.com/esphome/issues/issues/6639#issuecomment-2569764107
   platformio_options:
     build_flags: "-DI2C_NUM_1=I2C_NUM_0"
+  on_boot:
+    then:
+      - sensor.template.publish:
+          id: co2_ppm_1m
+          state: !lambda 'return id(co2_1min);'
+      - sensor.template.publish:
+          id: co2_ppm_2m
+          state: !lambda 'return id(co2_2min);'
+      - sensor.template.publish:
+          id: co2_ppm_3m
+          state: !lambda 'return id(co2_3min);'
+      - sensor.template.publish:
+          id: co2_ppm_4m
+          state: !lambda 'return id(co2_4min);'
+      - sensor.template.publish:
+          id: co2_ppm_5m
+          state: !lambda 'return id(co2_5min);'
+      - sensor.template.publish:
+          id: co2_ppm_15m
+          state: !lambda 'return id(co2_15min);'
+      - sensor.template.publish:
+          id: co2_ppm_30m
+          state: !lambda 'return id(co2_30min);'
+      - sensor.template.publish:
+          id: co2_ppm_1h
+          state: !lambda 'return id(co2_1h);'
+      - sensor.template.publish:
+          id: co2_ppm_24h
+          state: !lambda 'return id(co2_24h);'
+  on_shutdown:
+    then:
+      - globals.set:
+          id: co2_1min
+          value: !lambda 'return id(co2_ppm_1m).state;'
+      - globals.set:
+          id: co2_2min
+          value: !lambda 'return id(co2_ppm_2m).state;'
+      - globals.set:
+          id: co2_3min
+          value: !lambda 'return id(co2_ppm_3m).state;'
+      - globals.set:
+          id: co2_4min
+          value: !lambda 'return id(co2_ppm_4m).state;'
+      - globals.set:
+          id: co2_5min
+          value: !lambda 'return id(co2_ppm_5m).state;'
+      - globals.set:
+          id: co2_15min
+          value: !lambda 'return id(co2_ppm_15m).state;'
+      - globals.set:
+          id: co2_30min
+          value: !lambda 'return id(co2_ppm_30m).state;'
+      - globals.set:
+          id: co2_1h
+          value: !lambda 'return id(co2_ppm_1h).state;'
+      - globals.set:
+          id: co2_24h
+          value: !lambda 'return id(co2_ppm_24h).state;'
 
 # https://esphome.io/components/esp32
 esp32:
@@ -58,6 +117,38 @@ wifi:
 # Do not use when portable
 # captive_portal:
 
+
+# Save CO2 history levels between reboots
+globals:
+  - id: co2_1min
+    type: int
+    restore_value: true
+  - id: co2_2min
+    type: int
+    restore_value: true
+  - id: co2_3min
+    type: int
+    restore_value: true
+  - id: co2_4min
+    type: int
+    restore_value: true
+  - id: co2_5min
+    type: int
+    restore_value: true
+  - id: co2_15min
+    type: int
+    restore_value: true
+  - id: co2_30min
+    type: int
+    restore_value: true
+  - id: co2_1h
+    type: int
+    restore_value: true
+  - id: co2_24h
+    type: int
+    restore_value: true
+
+
 web_server:
   port: 80
   version: 3
@@ -65,12 +156,9 @@ web_server:
   - id: sorting_group_co2
     name: "CO2 Values (SDC41)"
     sorting_weight: -1
-  - id: sorting_group_controls
-    name: "Controls"
+  - id: sorting_group_statistics
+    name: "Statistics"
     sorting_weight: 10
-  - id: sorting_group_monitor
-    name: "Sensor monitor"
-    sorting_weight: 20
   - id: sorting_group_calibration
     name: "Calibration Values"
     sorting_weight: 40
@@ -130,9 +218,77 @@ sensor:
         sorting_group_id: sorting_group_co2
     update_interval: 5s
   # Store values for some time
+  # 1 min
+  - platform: template
+    name: "ppm 1min"
+    id: co2_ppm_1m
+    icon: mdi:molecule-co2
+    unit_of_measurement: ppm
+    lambda: |-
+      return id(ppm_co2).state;
+    update_interval: 60s
+    filters:
+      - sliding_window_moving_average:
+          window_size: 1
+          send_every: 1
+          send_first_at: 1
+    web_server:
+      sorting_group_id: sorting_group_statistics
+      sorting_weight: 1
+  # 2 min
+  - platform: template
+    name: "ppm 2min"
+    id: co2_ppm_2m
+    icon: mdi:molecule-co2
+    unit_of_measurement: ppm
+    lambda: |-
+      return id(ppm_co2).state;
+    update_interval: 60s
+    filters:
+      - sliding_window_moving_average:
+          window_size: 2
+          send_every: 1
+          send_first_at: 1
+    web_server:
+      sorting_group_id: sorting_group_statistics
+      sorting_weight: 2
+  # 3 min
+  - platform: template
+    name: "ppm 3min"
+    id: co2_ppm_3m
+    icon: mdi:molecule-co2
+    unit_of_measurement: ppm
+    lambda: |-
+      return id(ppm_co2).state;
+    update_interval: 60s
+    filters:
+      - sliding_window_moving_average:
+          window_size: 3
+          send_every: 1
+          send_first_at: 1
+    web_server:
+      sorting_group_id: sorting_group_statistics
+      sorting_weight: 3
+  # 4 min
+  - platform: template
+    name: "ppm 4min"
+    id: co2_ppm_4m
+    icon: mdi:molecule-co2
+    unit_of_measurement: ppm
+    lambda: |-
+      return id(ppm_co2).state;
+    update_interval: 60s
+    filters:
+      - sliding_window_moving_average:
+          window_size: 4
+          send_every: 1
+          send_first_at: 1
+    web_server:
+      sorting_group_id: sorting_group_statistics
+      sorting_weight: 4
   # 5 min
   - platform: template
-    name: "CO2 ppm 5min average"
+    name: "ppm 5min"
     id: co2_ppm_5m
     icon: mdi:molecule-co2
     unit_of_measurement: ppm
@@ -144,9 +300,12 @@ sensor:
           window_size: 5
           send_every: 1
           send_first_at: 1
+    web_server:
+      sorting_group_id: sorting_group_statistics
+      sorting_weight: 5
   # 15 min
   - platform: template
-    name: "CO2 ppm 15min average"
+    name: "ppm 15min"
     id: co2_ppm_15m
     icon: mdi:molecule-co2
     unit_of_measurement: ppm
@@ -158,9 +317,29 @@ sensor:
           window_size: 15
           send_every: 1
           send_first_at: 1
+    web_server:
+      sorting_group_id: sorting_group_statistics
+      sorting_weight: 6
+  # 30 min
+  - platform: template
+    name: "ppm 30min"
+    id: co2_ppm_30m
+    icon: mdi:molecule-co2
+    unit_of_measurement: ppm
+    lambda: |-
+      return id(ppm_co2).state;
+    update_interval: 60s
+    filters:
+      - sliding_window_moving_average:
+          window_size: 30
+          send_every: 1
+          send_first_at: 1
+    web_server:
+      sorting_group_id: sorting_group_statistics
+      sorting_weight: 7
   # 1 hour
   - platform: template
-    name: "CO2 ppm 1h average"
+    name: "ppm 1h"
     id: co2_ppm_1h
     icon: mdi:molecule-co2
     unit_of_measurement: ppm
@@ -172,9 +351,12 @@ sensor:
           window_size: 60
           send_every: 1
           send_first_at: 1
+    web_server:
+      sorting_group_id: sorting_group_statistics
+      sorting_weight: 8
   # 24 hours
   - platform: template
-    name: "CO2 ppm 24h average"
+    name: "ppm 24h"
     id: co2_ppm_24h
     icon: mdi:molecule-co2
     unit_of_measurement: ppm
@@ -186,12 +368,15 @@ sensor:
           window_size: 1440
           send_every: 1
           send_first_at: 1
-
+    web_server:
+      sorting_group_id: sorting_group_statistics
+      sorting_weight: 9
+    
   - platform: uptime
     name: "${friendly_name} Uptime"
     update_interval: 10s
     web_server:
-          sorting_group_id: sorting_group_diagnostic
+      sorting_group_id: sorting_group_diagnostic
 
   - platform: wifi_signal # Reports the WiFi signal strength/RSSI in dB
     name: "${friendly_name} WiFi Signal dB"
@@ -248,7 +433,11 @@ light:
     rgb_order: GRB
     num_leds: 1
     chipset: ws2812
+    effects:
+      - random:
+      - strobe:
+      - flicker:
     web_server: 
-      sorting_group_id: sorting_group_controls
+      sorting_group_id: sorting_group_service
 
 # END

@@ -1,0 +1,126 @@
+substitutions:
+  name: "esp32-c6-2-mic"
+  friendly_name: "ESP32_C6_2-mic"
+
+esphome:
+  name: "esp32-c6-2-mic"
+  friendly_name: "ESP32_C6_2-mic"
+  # https://github.com/esphome/esphome/pull/1651
+  # https://github.com/esphome/issues/issues/6639#issuecomment-2569764107
+  platformio_options:
+    build_flags: 
+      - "-I2S_MCLK_MULTIPLE_DEFAULT=I2S_MCLK_MULTIPLE_256"
+
+# https://esphome.io/components/esp32
+esp32:
+  board: esp32-c6-devkitc-1
+  flash_size: 8MB
+  variant: esp32c6
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_ESPTOOLPY_FLASHSIZE_8MB: y
+      # https://docs.espressif.com/projects/esp-idf/en/latest/esp32c6/api-reference/kconfig-reference.html#config-openthread-enabled
+      # https://community.home-assistant.io/t/esp32-c6-zigbee2mqtt/713289/4
+      CONFIG_ZB_ENABLED: y
+      CONFIG_ZB_ZED: y
+      CONFIG_ZB_RADIO_NATIVE: y
+      ZB_ED_ROLE: y
+    version: "5.3.1"
+    platform_version: 6.9.0
+
+external_components:
+  # - source: github://stas-sl/esphome-sound-level-meter
+    - source: /mnt/d/Projects/ESP/esphome-sound-level-meter/
+
+logger:
+  level: INFO
+api:
+  encryption:
+    key: !secret api_key
+ota:
+  - platform: esphome
+    password: !secret ota_password
+wifi:
+  networks:
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
+    - ssid: !secret wifi_ssid_portable
+      password: !secret wifi_password_portable
+  # Board will host Wifi by itself
+  ap:
+    ssid: "${friendly_name}"
+    password: !secret fall_back_wifi_password
+    manual_ip:
+        static_ip: !secret ap_static_ip_portable
+        gateway: !secret ap_static_gateway
+        subnet: 255.255.255.0
+        dns1: !secret ap_static_dns
+        dns2: 8.8.8.8
+  # When no WifI
+  reboot_timeout: 900s
+  # Do not fast connect when portable
+  # fast_connect: true
+
+# Do not use when portable
+# captive_portal:
+
+web_server:
+  port: 80
+  version: 3
+  sorting_groups:
+  - id: sorting_group_co2
+    name: "CO2 Values (SDC41)"
+    sorting_weight: -1
+  - id: sorting_group_statistics
+    name: "Statistics"
+    sorting_weight: 10
+  - id: sorting_group_calibration
+    name: "Calibration Values"
+    sorting_weight: 40
+  - id: sorting_group_diagnostic
+    name: "Diagnostic info"
+    sorting_weight: 60
+  - id: sorting_group_service
+    name: "Service"
+    sorting_weight: 90
+
+i2s:
+  bck_pin: 23
+  ws_pin: 18
+  din_pin: 19
+  sample_rate: 48000            # default: 48000
+  bits_per_sample: 32           # default: 32
+  dma_buf_count: 8              # default: 8
+  dma_buf_len: 256              # default: 256
+  use_apll: true                # default: false
+
+  # according to datasheet when L/R pin is connected to GND,
+  # the mic should output its signal in the left channel,
+  # however in my experience it's the opposite: when I connect
+  # L/R to GND then the signal is in the right channel
+  channel: right                # default: right
+
+  # right shift samples.
+  # for example if mic has 24 bit resolution, and
+  # i2s configured as 32 bits, then audio data will be aligned left (MSB)
+  # and LSB will be padded with zeros, so you might want to shift them right by 8 bits
+  bits_shift: 8                 # default: 0    
+
+# https://gist.github.com/baldowl/a413c2a08c10bc62c1a72328caac98c1?permalink_comment_id=5496287#gistcomment-5496287
+light:
+  - platform: esp32_rmt_led_strip
+    name: Status LED
+    id: co2light
+    pin: GPIO8
+    rgb_order: GRB
+    num_leds: 1
+    chipset: ws2812
+    effects:
+      - random:
+      - strobe:
+      - flicker:
+    web_server: 
+      sorting_group_id: sorting_group_service
+
+# END

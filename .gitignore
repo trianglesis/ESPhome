@@ -6,3 +6,5 @@ external/
 my_proj/secrets.yaml
 .my_proj/secrets.yaml
 /my_proj/secrets.yaml
+# Only this
+!/my_components/README.md
