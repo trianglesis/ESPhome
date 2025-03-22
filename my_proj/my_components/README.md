@@ -52,6 +52,11 @@ Get PR:
 ```shell
 git fetch origin pull/39/head:pr_39
 ```
+Switch branch
+
+```shell
+git switch pr_39
+```
 
 ```shell
 $ cd esphome-sound-level-meter/
@@ -62,4 +67,15 @@ remote: Total 20 (delta 4), reused 4 (delta 4), pack-reused 15 (from 1)
 Unpacking objects: 100% (20/20), 5.01 KiB | 395.00 KiB/s, done.
 From https://github.com/stas-sl/esphome-sound-level-meter
  * [new ref]         refs/pull/39/head -> pr_39
+$ git branch -a
+* main
+  pr_39
+  remotes/origin/HEAD -> origin/main
+  remotes/origin/dev
+  remotes/origin/main
+  remotes/origin/pdm_support
+  remotes/origin/use_esp_dsp
+  remotes/origin/wdt_debug
+$ git switch pr_39
+Switched to branch 'pr_39'
 ```
