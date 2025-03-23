@@ -38,6 +38,14 @@ Given the above example of my_components, the folder structure must look like:
 
 # Git PRs as external components
 
+```yaml
+external_components:
+  - source: github://mafrosis/esphome-sound-level-meter@tmp
+    components: [i2s, sound_level_meter]
+```
+
+# Git PRs as external components local
+
 - https://stackoverflow.com/a/30584951
 
 Use PRs as external components to test:

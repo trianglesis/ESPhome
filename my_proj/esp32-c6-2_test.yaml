@@ -1,10 +1,10 @@
 substitutions:
-  name: "esp32-c6-2-mic"
-  friendly_name: "ESP32_C6_2-mic"
+  name: "esp32-c6-2-test"
+  friendly_name: "ESP32_C6_2-test"
 
 esphome:
-  name: "esp32-c6-2-mic"
-  friendly_name: "ESP32_C6_2-mic"
+  name: "esp32-c6-2-test"
+  friendly_name: "ESP32_C6_2-test"
 
 esp32:
   board: esp32-c6-devkitc-1
@@ -12,16 +12,19 @@ esp32:
   variant: esp32c6
   framework:
     type: esp-idf
+    # https://github.com/esphome/issues/issues/6639#issuecomment-2740709572
+    version: 5.3.2
+    platform_version: 53.03.11
     sdkconfig_options:
       CONFIG_ESPTOOLPY_FLASHSIZE_8MB: y
-    version: "5.3.1"
-    platform_version: 6.9.0
+      CONFIG_ZB_ENABLED: y
+      CONFIG_ZB_RADIO_NATIVE: y
+      CONFIG_ZB_ZED: y
+      ZB_ED_ROLE: y
 
-# external_components:
-  # - source: github://mafrosis/esphome-sound-level-meter@tmp
-  #   components: [i2s, sound_level_meter]
-  # - source: github://stas-sl/esphome-sound-level-meter@dev
-    # components: [i2s, sound_level_meter]
+external_components:    
+  - source: github://pr#8440
+    components: [ esp32 ]
 
 logger:
   level: INFO
@@ -68,8 +71,8 @@ web_server:
   port: 80
   version: 3
   sorting_groups:
-  - id: sorting_group_co2
-    name: "CO2 Values (SDC41)"
+  - id: sorting_group_first
+    name: "Importanr values"
     sorting_weight: -1
   - id: sorting_group_statistics
     name: "Statistics"
@@ -85,20 +88,17 @@ web_server:
     sorting_weight: 90
 
 sensor:
-    
   - platform: uptime
     name: "${friendly_name} Uptime"
     update_interval: 10s
     web_server:
       sorting_group_id: sorting_group_diagnostic
-
   - platform: wifi_signal # Reports the WiFi signal strength/RSSI in dB
     name: "${friendly_name} WiFi Signal dB"
     id: wifi_signal_db
     update_interval: 10s
     web_server:
       sorting_group_id: sorting_group_diagnostic
-
   - platform: copy # Reports the WiFi signal strength in %
     source_id: wifi_signal_db
     name: "${friendly_name}  WiFi Signal Percent"
@@ -138,6 +138,23 @@ button:
     web_server:
       sorting_group_id: sorting_group_service
 
+switch:
+  # https://esphome.io/components/switch/gpio.html#gpio-switch
+  - platform: gpio
+    name: "Switch (GPIO02)"
+    id: pin_GPIO02
+    pin:
+      number: GPIO02
+      inverted: true
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO02) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO02) Turned Off!"
+
 # https://gist.github.com/baldowl/a413c2a08c10bc62c1a72328caac98c1?permalink_comment_id=5496287#gistcomment-5496287
 light:
   - platform: esp32_rmt_led_strip
@@ -153,8 +170,5 @@ light:
       - flicker:
     web_server: 
       sorting_group_id: sorting_group_service
-
-# END
-
 
 # END

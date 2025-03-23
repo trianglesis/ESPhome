@@ -17,8 +17,15 @@ esp32:
   variant: esp32c6
   framework:
     type: esp-idf
+    # https://github.com/esphome/issues/issues/6639#issuecomment-2740709572
+    version: 5.3.2
+    platform_version: 53.03.11
     sdkconfig_options:
       CONFIG_ESPTOOLPY_FLASHSIZE_8MB: y
+      CONFIG_ZB_ENABLED: y
+      CONFIG_ZB_RADIO_NATIVE: y
+      CONFIG_ZB_ZED: y
+      ZB_ED_ROLE: y
 
     # Zigbee:
     # https://github.com/luar123/esphome_zb_sensor
@@ -120,14 +127,6 @@ uart:
   tx_pin: GPIO16
   rx_pin: GPIO17
   baud_rate: 9600
-
-# # Led is uncontrollable
-# spi:
-#   mosi_pin:
-#     number: GPIO08
-#     allow_other_uses: true
-#   clk_pin:
-#     number: GPIO06
 
 # i2c:
 #   id: bus_a
@@ -299,53 +298,21 @@ button:
   web_server:
     sorting_group_id: sorting_group_controls
 
+# https://gist.github.com/baldowl/a413c2a08c10bc62c1a72328caac98c1?permalink_comment_id=5496287#gistcomment-5496287
 light:
-  - platform: binary
-    name: "LED (GPIO08) platform light"
-    output: output_GPIO08
-
-  # # Led is uncontrollable
-  # # https://esphome.io/components/light/esp32_rmt_led_strip
-  # # https://forum.mylocalbytes.com/d/162-localdeck-this-feature-is-not-available-for-the-idf-framework-version-5 
-  # # https://gist.github.com/baldowl/a413c2a08c10bc62c1a72328caac98c1
-  # # https://www.reddit.com/r/esp32/comments/1fh8nup/comment/meeu3em/
-  # - platform: esp32_rmt_led_strip
-  #   name: "RTM LED Light"
-  #   id: onboard_led
-  #   rgb_order: GRB
-  #   pin:
-  #     number: GPIO08
-  #     allow_other_uses: true
-  #   num_leds: 1
-  #   # chipset: WS2812 # actually WS2812B
-  #   bit0_high: 1s # (Optional, Time): The time to hold the data line high for a 0 bit.
-  #   bit0_low: 1s # (Optional, Time): The time to hold the data line low for a 0 bit.
-  #   bit1_high: 1s # (Optional, Time): The time to hold the data line high for a 1 bit.
-  #   bit1_low: 1s # (Optional, Time): The time to hold the data line low for a 1 bit.
-  #   reset_high: 0s # (Optional, Time): The time to hold the data line high after writing the state. Defaults to 0 us.
-  #   reset_low: 0s # (Optional, Time): The time to hold the data line low after writing the state. Defaults to 0 us.
-  #   icon: "mdi:led-outline"
-  #   effects:
-  #     - random:
-  #     - flicker:
-  #     - addressable_rainbow:
-  #   web_server:
-  #     sorting_group_id: sorting_group_controls
-
-  # # Led is uncontrollable
-  # # https://esphome.io/components/light/spi_led_strip
-  # - platform: spi_led_strip
-  #   num_leds: 1
-  #   id: rgb_led
-  #   name: "SPI RGB LED Strip (GPIO08)"
-  #   data_rate: 1MHz
-  #   icon: "mdi:led-outline"
-  #   effects:
-  #     - random:
-  #     - flicker:
-  #     - addressable_rainbow:
-  #   web_server:
-  #     sorting_group_id: sorting_group_controls
+  - platform: esp32_rmt_led_strip
+    name: Status LED
+    id: co2light
+    pin: GPIO8
+    rgb_order: GRB
+    num_leds: 1
+    chipset: ws2812
+    effects:
+      - random:
+      - strobe:
+      - flicker:
+    web_server: 
+      sorting_group_id: sorting_group_service
 
 switch:
   - platform: gpio
