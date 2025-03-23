@@ -5,6 +5,8 @@ substitutions:
 esphome:
   name: "esp32-c6-2-mic"
   friendly_name: "ESP32_C6_2-mic"
+  platformio_options:
+    build_flags: "-I2S_NUM_MAX=I2S_NUM_0 -I2S_MCLK_MULTIPLE_DEFAULT=I2S_MCLK_MULTIPLE_768"
 
 esp32:
   board: esp32-c6-devkitc-1
@@ -12,16 +14,17 @@ esp32:
   variant: esp32c6
   framework:
     type: esp-idf
-    sdkconfig_options:
-      CONFIG_ESPTOOLPY_FLASHSIZE_8MB: y
     version: "5.3.1"
     platform_version: 6.9.0
-
-# external_components:
-  # - source: github://mafrosis/esphome-sound-level-meter@tmp
-  #   components: [i2s, sound_level_meter]
-  # - source: github://stas-sl/esphome-sound-level-meter@dev
-    # components: [i2s, sound_level_meter]
+    sdkconfig_options:
+      CONFIG_ESPTOOLPY_FLASHSIZE_8MB: y
+    
+external_components:
+  - source: github://esphome/esphome@jesserockz-2023-409
+    components: i2s_audio
+    refresh: 0s
+  - source: github://mafrosis/esphome-sound-level-meter@tmp
+    components: [i2s, sound_level_meter]
 
 logger:
   level: INFO
@@ -68,8 +71,8 @@ web_server:
   port: 80
   version: 3
   sorting_groups:
-  - id: sorting_group_co2
-    name: "CO2 Values (SDC41)"
+  - id: sorting_group_general
+    name: "General"
     sorting_weight: -1
   - id: sorting_group_statistics
     name: "Statistics"
@@ -84,8 +87,19 @@ web_server:
     name: "Service"
     sorting_weight: 90
 
+#   Unsupported variant ESP32C6. !!!
+i2s_audio:
+  i2s_lrclk_pin: GPIO19
+  i2s_bclk_pin: GPIO18
+
+microphone:
+  - platform: i2s_audio
+    id: external_mic
+    adc_type: external
+    i2s_din_pin: GPIO20
+    pdm: false
+
 sensor:
-    
   - platform: uptime
     name: "${friendly_name} Uptime"
     update_interval: 10s
@@ -153,8 +167,5 @@ light:
       - flicker:
     web_server: 
       sorting_group_id: sorting_group_service
-
-# END
-
 
 # END
