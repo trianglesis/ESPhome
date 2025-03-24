@@ -117,3 +117,7 @@ esphome:
   platformio_options:
     build_flags: "-I2S_NUM_MAX=I2S_NUM_0 -I2S_MCLK_MULTIPLE_DEFAULT=I2S_MCLK_MULTIPLE_768"
 ```
+
+2. Local external components
+
+See: [my_proj/my_components/README.md](../../my_proj/my_components/README.md)
