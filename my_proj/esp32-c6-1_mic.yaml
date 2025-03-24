@@ -6,6 +6,7 @@ esphome:
   name: "esp32-c6-2-mic"
   friendly_name: "ESP32_C6_2-mic"
   on_boot:
+  # Indicate that the board is alive and well as soon as all monules are loaded, but then it dies when Wifi activates
   - repeat:
       count: 5
       then:
@@ -79,9 +80,9 @@ wifi:
 # Do not use when portable
 # captive_portal:
 
-# web_server:
-#   port: 80
-#   version: 3
+web_server:
+  port: 80
+  version: 3
 
 i2s:
   bck_pin: 23 # SCK
