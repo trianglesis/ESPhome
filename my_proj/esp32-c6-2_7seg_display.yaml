@@ -60,12 +60,9 @@ wifi:
         dns1: !secret ap_static_dns
         dns2: 8.8.8.8
   # When no WifI
-  reboot_timeout: 900s
+  reboot_timeout: 10800s
   # Do not fast connect when portable
   # fast_connect: true
-
-# Do not use when portable
-# captive_portal:
 
 web_server:
   port: 80
@@ -90,13 +87,13 @@ web_server:
 sensor:
   - platform: uptime
     name: "${friendly_name} Uptime"
-    update_interval: 10s
+    update_interval: 60s
     web_server:
       sorting_group_id: sorting_group_diagnostic
   - platform: wifi_signal # Reports the WiFi signal strength/RSSI in dB
     name: "${friendly_name} WiFi Signal dB"
     id: wifi_signal_db
-    update_interval: 10s
+    update_interval: 60s
     web_server:
       sorting_group_id: sorting_group_diagnostic
   - platform: copy # Reports the WiFi signal strength in %
@@ -141,19 +138,155 @@ button:
 switch:
   # https://esphome.io/components/switch/gpio.html#gpio-switch
   - platform: gpio
-    name: "Switch (GPIO02)"
-    id: pin_GPIO02
+    name: "Switch (GPIO13)"
+    id: pin_GPIO13
     pin:
-      number: GPIO02
+      number: GPIO13
       inverted: true
       mode: 
         output: true
         open_drain: true
     restore_mode: ALWAYS_OFF
     on_turn_on:
-    - logger.log: "Switch (GPIO02) Turned On!"
+    - logger.log: "Switch (GPIO13) Turned On!"
     on_turn_off:
-    - logger.log: "Switch (GPIO02) Turned Off!"
+    - logger.log: "Switch (GPIO13) Turned Off!"
+
+  - platform: gpio
+    name: "Switch (GPIO12)"
+    id: pin_GPIO12
+    pin:
+      number: GPIO12
+      inverted: true
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO12) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO12) Turned Off!"
+
+  - platform: gpio
+    name: "Switch (GPIO11)"
+    id: pin_GPIO11
+    pin:
+      number: GPIO11
+      inverted: true
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO11) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO11) Turned Off!"
+
+  - platform: gpio
+    name: "Switch (GPIO10)"
+    id: pin_GPIO10
+    pin:
+      number: GPIO10
+      inverted: true
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO10) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO10) Turned Off!"
+
+  - platform: gpio
+    name: "Switch (GPIO09)"
+    id: pin_GPIO09
+    pin:
+      number: GPIO09
+      inverted: true
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO09) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO09) Turned Off!"
+
+  - platform: gpio
+    name: "Switch (GPIO18)"
+    id: pin_GPIO18
+    pin:
+      number: GPIO18
+      inverted: true
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO18) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO18) Turned Off!"
+
+  - platform: gpio
+    name: "Switch (GPIO19)"
+    id: pin_GPIO19
+    pin:
+      number: GPIO19
+      inverted: true
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO19) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO19) Turned Off!"
+
+  - platform: gpio
+    name: "Switch (GPIO20)"
+    id: pin_GPIO20
+    pin:
+      number: GPIO20
+      inverted: true
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO20) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO20) Turned Off!"
+
+  - platform: gpio
+    name: "Switch (GPIO21)"
+    id: pin_GPIO21
+    pin:
+      number: GPIO21
+      inverted: true
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO21) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO21) Turned Off!"
+
+  - platform: gpio
+    name: "Switch (GPIO22)"
+    id: pin_GPIO22
+    pin:
+      number: GPIO22
+      inverted: true
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO22) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO22) Turned Off!"
+
 
 # https://gist.github.com/baldowl/a413c2a08c10bc62c1a72328caac98c1?permalink_comment_id=5496287#gistcomment-5496287
 light:

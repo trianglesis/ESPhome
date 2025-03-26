@@ -6,7 +6,6 @@ esphome:
   name: "esp32-c6-1"
   friendly_name: "ESP32_C6_1"
   # https://github.com/esphome/esphome/pull/1651
-  # https://github.com/esphome/issues/issues/6639#issuecomment-2569764107
   platformio_options:
     build_flags: "-DI2C_NUM_1=I2C_NUM_0"
   on_boot:
@@ -77,6 +76,11 @@ esp32:
     type: esp-idf
     sdkconfig_options:
       CONFIG_ESPTOOLPY_FLASHSIZE_8MB: y
+      # https://community.home-assistant.io/t/esp32-c6-zigbee2mqtt/713289/4
+      # CONFIG_ZB_ENABLED: y
+      # CONFIG_ZB_ZED: y
+      # CONFIG_ZB_RADIO_NATIVE: y
+      # ZB_ED_ROLE: y
     version: "5.3.1"
     platform_version: 6.9.0
 
@@ -109,13 +113,10 @@ wifi:
         subnet: 255.255.255.0
         dns1: !secret ap_static_dns
         dns2: 8.8.8.8
-  # When no WifI
-  reboot_timeout: 900s
+  # When no API connection
+  reboot_timeout: 0s
   # Do not fast connect when portable
   # fast_connect: true
-
-# Do not use when portable
-# captive_portal:
 
 
 # Save CO2 history levels between reboots
@@ -183,9 +184,15 @@ sensor:
     i2c_id: bus_a
     address: 0x62
     id: scd41_esp32
+    automatic_self_calibration: true
+    measurement_mode: periodic
     co2:
       name: "CO2"
       id: "ppm_co2"
+      state_class: 'measurement'
+      device_class: "carbon_dioxide"
+      unit_of_measurement: "ppm"
+      icon: mdi:molecule-co2
       filters:
       - skip_initial: 3
       web_server:
@@ -205,6 +212,9 @@ sensor:
     temperature:
       name: "Temperature"
       id: "temperature"
+      state_class: 'measurement'
+      device_class: "temperature"
+      accuracy_decimals: 2
       filters:
       - skip_initial: 3
       web_server:
@@ -212,6 +222,10 @@ sensor:
     humidity:
       name: "Humidity"
       id: "humidity"
+      state_class: 'measurement'
+      device_class: "humidity"
+      unit_of_measurement: "%"
+      accuracy_decimals: 2
       filters:
       - skip_initial: 3
       web_server:
@@ -374,14 +388,14 @@ sensor:
     
   - platform: uptime
     name: "${friendly_name} Uptime"
-    update_interval: 10s
+    update_interval: 60s
     web_server:
       sorting_group_id: sorting_group_diagnostic
 
   - platform: wifi_signal # Reports the WiFi signal strength/RSSI in dB
     name: "${friendly_name} WiFi Signal dB"
     id: wifi_signal_db
-    update_interval: 10s
+    update_interval: 60s
     web_server:
       sorting_group_id: sorting_group_diagnostic
 
@@ -433,10 +447,6 @@ light:
     rgb_order: GRB
     num_leds: 1
     chipset: ws2812
-    effects:
-      - random:
-      - strobe:
-      - flicker:
     web_server: 
       sorting_group_id: sorting_group_service
 

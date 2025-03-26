@@ -1,0 +1,307 @@
+substitutions:
+  name: "esp32-c6-2-test"
+  friendly_name: "ESP32_C6_2-test"
+
+esphome:
+  name: "esp32-c6-2-test"
+  friendly_name: "ESP32_C6_2-test"
+
+esp32:
+  board: esp32-c6-devkitc-1
+  flash_size: 8MB
+  variant: esp32c6
+  framework:
+    type: esp-idf
+    # https://github.com/esphome/issues/issues/6639#issuecomment-2740709572
+    version: 5.3.2
+    platform_version: 53.03.11
+    sdkconfig_options:
+      CONFIG_ESPTOOLPY_FLASHSIZE_8MB: y
+      CONFIG_ZB_ENABLED: y
+      CONFIG_ZB_RADIO_NATIVE: y
+      CONFIG_ZB_ZED: y
+      ZB_ED_ROLE: y
+
+external_components:    
+  - source: github://pr#8440
+    components: [ esp32 ]
+
+logger:
+  level: INFO
+  baud_rate: 115200
+  hardware_uart: USB_SERIAL_JTAG
+  logs:
+    sensor: INFO
+    component: INFO
+    esp-idf: ERROR
+    template.sensor: INFO
+    text_sensor: INFO
+
+api:
+  encryption:
+    key: !secret api_key
+ota:
+  - platform: esphome
+    password: !secret ota_password
+wifi:
+  networks:
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
+    - ssid: !secret wifi_ssid_portable
+      password: !secret wifi_password_portable
+  # Board will host Wifi by itself
+  ap:
+    ssid: "${friendly_name}"
+    password: !secret fall_back_wifi_password
+    manual_ip:
+        static_ip: !secret ap_static_ip_portable
+        gateway: !secret ap_static_gateway
+        subnet: 255.255.255.0
+        dns1: !secret ap_static_dns
+        dns2: 8.8.8.8
+  # When no WifI
+  reboot_timeout: 10800s
+  # Do not fast connect when portable
+  # fast_connect: true
+
+web_server:
+  port: 80
+  version: 3
+  sorting_groups:
+  - id: sorting_group_first
+    name: "Importanr values"
+    sorting_weight: -1
+  - id: sorting_group_statistics
+    name: "Statistics"
+    sorting_weight: 10
+  - id: sorting_group_calibration
+    name: "Calibration Values"
+    sorting_weight: 40
+  - id: sorting_group_diagnostic
+    name: "Diagnostic info"
+    sorting_weight: 60
+  - id: sorting_group_service
+    name: "Service"
+    sorting_weight: 90
+
+sensor:
+  - platform: uptime
+    name: "${friendly_name} Uptime"
+    update_interval: 60s
+    web_server:
+      sorting_group_id: sorting_group_diagnostic
+  - platform: wifi_signal # Reports the WiFi signal strength/RSSI in dB
+    name: "${friendly_name} WiFi Signal dB"
+    id: wifi_signal_db
+    update_interval: 60s
+    web_server:
+      sorting_group_id: sorting_group_diagnostic
+  - platform: copy # Reports the WiFi signal strength in %
+    source_id: wifi_signal_db
+    name: "${friendly_name}  WiFi Signal Percent"
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+    unit_of_measurement: "Signal %"
+    device_class: ""
+    web_server:
+      sorting_group_id: sorting_group_diagnostic
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "${friendly_name} IP Address"
+      web_server:
+          sorting_group_id: sorting_group_diagnostic
+    ssid:
+      name: "${friendly_name} Connected SSID"
+      web_server:
+          sorting_group_id: sorting_group_diagnostic
+    bssid:
+      name: "${friendly_name} Connected BSSID"
+      web_server:
+          sorting_group_id: sorting_group_diagnostic
+    mac_address:
+      name: "${friendly_name} Mac Wifi Address"
+      web_server:
+          sorting_group_id: sorting_group_diagnostic
+    dns_address:
+      name: "${friendly_name} DNS Address"
+      web_server:
+          sorting_group_id: sorting_group_diagnostic
+
+button:
+  - platform: restart
+    name: "Restart"
+    web_server:
+      sorting_group_id: sorting_group_service
+
+switch:
+  # https://esphome.io/components/switch/gpio.html#gpio-switch
+  - platform: gpio
+    name: "Switch (GPIO13)"
+    id: pin_GPIO13
+    pin:
+      number: GPIO13
+      inverted: true
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO13) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO13) Turned Off!"
+
+  - platform: gpio
+    name: "Switch (GPIO12)"
+    id: pin_GPIO12
+    pin:
+      number: GPIO12
+      inverted: true
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO12) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO12) Turned Off!"
+
+  - platform: gpio
+    name: "Switch (GPIO11)"
+    id: pin_GPIO11
+    pin:
+      number: GPIO11
+      inverted: true
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO11) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO11) Turned Off!"
+
+  - platform: gpio
+    name: "Switch (GPIO10)"
+    id: pin_GPIO10
+    pin:
+      number: GPIO10
+      inverted: true
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO10) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO10) Turned Off!"
+
+  - platform: gpio
+    name: "Switch (GPIO9)"
+    id: pin_GPIO9
+    pin:
+      number: GPIO9
+      inverted: true
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO9) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO9) Turned Off!"
+
+  - platform: gpio
+    name: "Switch (GPIO18)"
+    id: pin_GPIO18
+    pin:
+      number: GPIO18
+      inverted: true
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO18) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO18) Turned Off!"
+
+  - platform: gpio
+    name: "Switch (GPIO19)"
+    id: pin_GPIO19
+    pin:
+      number: GPIO19
+      inverted: true
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO19) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO19) Turned Off!"
+
+  - platform: gpio
+    name: "Switch (GPIO20)"
+    id: pin_GPIO20
+    pin:
+      number: GPIO20
+      inverted: true
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO20) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO20) Turned Off!"
+
+  - platform: gpio
+    name: "Switch (GPIO21)"
+    id: pin_GPIO21
+    pin:
+      number: GPIO21
+      inverted: true
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO21) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO21) Turned Off!"
+
+  - platform: gpio
+    name: "Switch (GPIO22)"
+    id: pin_GPIO22
+    pin:
+      number: GPIO22
+      inverted: true
+      mode: 
+        output: true
+        open_drain: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - logger.log: "Switch (GPIO22) Turned On!"
+    on_turn_off:
+    - logger.log: "Switch (GPIO22) Turned Off!"
+
+
+# https://gist.github.com/baldowl/a413c2a08c10bc62c1a72328caac98c1?permalink_comment_id=5496287#gistcomment-5496287
+light:
+  - platform: esp32_rmt_led_strip
+    name: Status LED
+    id: co2light
+    pin: GPIO8
+    rgb_order: GRB
+    num_leds: 1
+    chipset: ws2812
+    effects:
+      - random:
+      - strobe:
+      - flicker:
+    web_server: 
+      sorting_group_id: sorting_group_service
+
+# END

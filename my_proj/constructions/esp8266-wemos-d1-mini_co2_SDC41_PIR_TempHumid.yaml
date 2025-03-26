@@ -58,14 +58,19 @@ web_server:
   - id: sorting_group_temp_hum
     name: "Temp and humid (AM2302)"
     sorting_weight: 10
-  - id: sorting_group_calibration
-    name: "Calibration Values"
+  - id: sorting_group_controls
+    name: "Controls"
     sorting_weight: 40
   - id: sorting_group_diagnostic
     name: "Diagnostic info"
     sorting_weight: 50
 
 output:
+  - platform: gpio
+    id: gpio_led_w1
+    pin:
+      number: D4
+      inverted: true
   - platform: gpio
     pin: D8
     id: gpio_led
@@ -82,7 +87,8 @@ binary_sensor:
     name: "Motion Sensor"
     id: "wemos_motion"
     icon: mdi:motion-sensor
-
+    web_server:
+      sorting_group_id: sorting_group_temp_hum
 
 sensor:
   # https://esphome.io/components/sensor/scd4x.html#configuration-variables
@@ -105,21 +111,20 @@ sensor:
       web_server:
         sorting_group_id: sorting_group_co2
       on_value_range:
-      - above: 901
+      - above: 1101
         then:
           - light.turn_on: co2_led
           - logger.log: 
               format: "Level CO2 is HIGH!"
               level: WARN
               tag: sensor.co2
-      - below: 900
+      - below: 1100
         then:
           - light.turn_off: co2_led
           - logger.log: 
               format: "Level CO2 is NORM!"
               level: WARN
               tag: sensor.co2
-
     temperature:
       name: "Temperature"
       id: "temperature"
@@ -144,7 +149,7 @@ sensor:
     update_interval: 5s
 
   - platform: dht
-    pin: D4
+    pin: D7
     model: AM2302
     temperature:
       name: "Temperature AM2302"
@@ -170,7 +175,6 @@ sensor:
       web_server:
         sorting_group_id: sorting_group_temp_hum
     update_interval: 5s
-
   # Store values for some time
   # 15 min
   - platform: template
@@ -180,6 +184,8 @@ sensor:
     unit_of_measurement: "ppm"
     lambda: |-
       return id(ppm_co2).state;
+    web_server:
+      sorting_group_id: sorting_group_co2
     update_interval: 60s
     filters:
       - sliding_window_moving_average:
@@ -194,6 +200,8 @@ sensor:
     unit_of_measurement: "ppm"
     lambda: |-
       return id(ppm_co2).state;
+    web_server:
+      sorting_group_id: sorting_group_co2
     update_interval: 60s
     filters:
       - sliding_window_moving_average:
@@ -208,6 +216,8 @@ sensor:
     unit_of_measurement: "ppm"
     lambda: |-
       return id(ppm_co2).state;
+    web_server:
+      sorting_group_id: sorting_group_co2
     update_interval: 60s
     filters:
       - sliding_window_moving_average:
@@ -224,6 +234,7 @@ sensor:
     name: "WiFi Signal dB"
     id: wifi_signal_db
     update_interval: 60s
+    icon: mdi:led-outline
     web_server:
       sorting_group_id: sorting_group_diagnostic
 
@@ -241,22 +252,27 @@ text_sensor:
   - platform: wifi_info
     ip_address:
       name: "ESP IP Address"
+      icon: mdi:led-outline
       web_server:
         sorting_group_id: sorting_group_diagnostic          
     ssid:
       name: "ESP Connected SSID"
+      icon: mdi:led-outline
       web_server:
         sorting_group_id: sorting_group_diagnostic      
     bssid:
       name: "ESP Connected BSSID"
+      icon: mdi:led-outline
       web_server:
         sorting_group_id: sorting_group_diagnostic      
     mac_address:
       name: "ESP Mac Wifi Address"
+      icon: mdi:led-outline
       web_server:
         sorting_group_id: sorting_group_diagnostic      
     dns_address:
       name: "ESP DNS Address"
+      icon: mdi:led-outline
       web_server:
         sorting_group_id: sorting_group_diagnostic      
 
@@ -268,8 +284,18 @@ button:
 
 light:
   - platform: binary
+    id: w1_led
+    name: "Wemos W1 LED"
+    output: gpio_led_w1
+    icon: mdi:led-outline
+    web_server:
+      sorting_group_id: sorting_group_controls
+  - platform: binary
     id: co2_led
     name: "CO2_light"
     output: gpio_led
+    icon: mdi:led-outline
+    web_server:
+      sorting_group_id: sorting_group_controls
 
 # END
