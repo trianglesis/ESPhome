@@ -234,7 +234,7 @@ sensor:
     name: "WiFi Signal dB"
     id: wifi_signal_db
     update_interval: 60s
-    icon: mdi:led-outline
+    icon: mdi:wifi
     web_server:
       sorting_group_id: sorting_group_diagnostic
 
@@ -252,27 +252,27 @@ text_sensor:
   - platform: wifi_info
     ip_address:
       name: "ESP IP Address"
-      icon: mdi:led-outline
+      icon: mdi:wifi
       web_server:
         sorting_group_id: sorting_group_diagnostic          
     ssid:
       name: "ESP Connected SSID"
-      icon: mdi:led-outline
+      icon: mdi:wifi
       web_server:
         sorting_group_id: sorting_group_diagnostic      
     bssid:
       name: "ESP Connected BSSID"
-      icon: mdi:led-outline
+      icon: mdi:wifi
       web_server:
         sorting_group_id: sorting_group_diagnostic      
     mac_address:
       name: "ESP Mac Wifi Address"
-      icon: mdi:led-outline
+      icon: mdi:wifi
       web_server:
         sorting_group_id: sorting_group_diagnostic      
     dns_address:
       name: "ESP DNS Address"
-      icon: mdi:led-outline
+      icon: mdi:wifi
       web_server:
         sorting_group_id: sorting_group_diagnostic      
 
