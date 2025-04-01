@@ -23,8 +23,17 @@ esphome:
           id: danger_lvl
           state: "більше 1900 ppm"
       - text_sensor.template.publish:
-          id: help_url
+          id: help_url_1
           state: "https://aerostar.ua/ua/news/novosti/co2-u-primischennjahl-na-scho-vplivae-dioksid-vuglecju-u-povitri-ta-jak-zmenshiti-jogo-riven.html"
+      - text_sensor.template.publish:
+          id: help_url_2
+          state: "https://health.gov.ua/activity/scientific-educational-activity/co2-influence-on-health/"
+      - text_sensor.template.publish:
+          id: help_url_3
+          state: "https://aam.com.ua/2024/05/09/vysokyj-riven-co2-maye-tryvozhnyj-vplyv-na-virusy-shho-shyryatsya-povitryam/"
+      - text_sensor.template.publish:
+          id: help_url_4
+          state: "https://uk.wikipedia.org/wiki/Якість_повітря_в_приміщенні#Вуглекислий_газ"
 
 # https://esphome.io/components/esp32
 esp32:
@@ -181,9 +190,16 @@ sensor:
       sorting_group_id: sorting_group_diagnostic
 
 text_sensor:
+  - platform: uptime
+    name: Uptime txt
+    update_interval: 60s
+    web_server:
+      sorting_group_id: sorting_group_diagnostic
+
   - platform: template
     name: "OK"
     id: ok_lvl
+    icon: mdi:check-circle-outline
     web_server:
       sorting_group_id: sorting_group_help  
       sorting_weight: 2
@@ -195,26 +211,47 @@ text_sensor:
       sorting_group_id: sorting_group_help  
       sorting_weight: 3
   - platform: template
-    name: "Поганий - провітрювання необхідно!"
+    name: "Поганий рівень"
     id: bad_lvl
     icon: mdi:account-alert
     web_server:
       sorting_group_id: sorting_group_help  
       sorting_weight: 4
   - platform: template
-    name: "Небезпечний - провітрити невідкладно!"
+    name: "Небезпечний рівень"
     id: danger_lvl
     icon: mdi:close-octagon
     web_server:
       sorting_group_id: sorting_group_help
       sorting_weight: 5
   - platform: template
-    name: "Інформація"
-    id: help_url
+    name: "Справка"
+    id: help_url_1
     icon: mdi:help-box-outline
     web_server:
       sorting_group_id: sorting_group_help  
       sorting_weight: 6
+  - platform: template
+    name: "Інформація"
+    id: help_url_2
+    icon: mdi:help-box-outline
+    web_server:
+      sorting_group_id: sorting_group_help  
+      sorting_weight: 7
+  - platform: template
+    name: "CO2 та COVID"
+    id: help_url_3
+    icon: mdi:help-box-outline
+    web_server:
+      sorting_group_id: sorting_group_help  
+      sorting_weight: 8
+  - platform: template
+    name: "Wiki"
+    id: help_url_4
+    icon: mdi:help-box-outline
+    web_server:
+      sorting_group_id: sorting_group_help  
+      sorting_weight: 9
 
 #####
 # Disable now
