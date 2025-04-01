@@ -10,19 +10,18 @@ esphome:
     build_flags: "-DI2C_NUM_1=I2C_NUM_0"
   on_boot:
     then:
-      # Help info
       - text_sensor.template.publish:
-          id: normal_lvl
-          state: " до 1000 ppm"
+          id: ok_lvl
+          state: "до 1000 ppm"
       - text_sensor.template.publish:
           id: worse_lvl
-          state: " до 1200 ppm"
+          state: "до 1200 ppm"
       - text_sensor.template.publish:
           id: bad_lvl
-          state: " до 1500 ppm"
+          state: "до 1500 ppm"
       - text_sensor.template.publish:
           id: danger_lvl
-          state: " більше 1900 ppm"
+          state: "більше 1900 ppm"
       - text_sensor.template.publish:
           id: help_url
           state: "https://aerostar.ua/ua/news/novosti/co2-u-primischennjahl-na-scho-vplivae-dioksid-vuglecju-u-povitri-ta-jak-zmenshiti-jogo-riven.html"
@@ -85,10 +84,10 @@ wifi:
       static_ip: 192.168.4.4
       gateway: 192.168.4.4
       subnet: 255.255.255.0
-      dns1: 8.8.8.8
+      dns1: 192.168.4.4
+      dns2: 8.8.8.8
   # Do not fast connect when portable
   # fast_connect: true
-
 
 web_server:
   port: 80
@@ -153,7 +152,7 @@ sensor:
               call.set_brightness(1);
               call.perform();
     temperature:
-      name: "Температура:"
+      name: "Температура"
       id: "temperature"
       state_class: 'measurement'
       device_class: "temperature"
@@ -163,7 +162,7 @@ sensor:
       web_server:
         sorting_group_id: sorting_group_co2
     humidity:
-      name: "Вологість:"
+      name: "Вологість"
       id: "humidity"
       state_class: 'measurement'
       device_class: "humidity"
@@ -183,45 +182,39 @@ sensor:
 
 text_sensor:
   - platform: template
-    disabled_by_default: true # not in HA
-    name: "Нормальний рівень"
-    id: normal_lvl
-    icon: mdi:molecule-co2
+    name: "OK"
+    id: ok_lvl
     web_server:
       sorting_group_id: sorting_group_help  
-      sorting_weight: -1
+      sorting_weight: 2
   - platform: template
-    disabled_by_default: true # not in HA
     name: "Погіршений рівень"
     id: worse_lvl
     icon: mdi:alert
     web_server:
       sorting_group_id: sorting_group_help  
-      sorting_weight: 2
+      sorting_weight: 3
   - platform: template
-    disabled_by_default: true # not in HA
     name: "Поганий - провітрювання необхідно!"
     id: bad_lvl
     icon: mdi:account-alert
     web_server:
       sorting_group_id: sorting_group_help  
-      sorting_weight: 3
+      sorting_weight: 4
   - platform: template
-    disabled_by_default: true # not in HA
     name: "Небезпечний - провітрити невідкладно!"
     id: danger_lvl
     icon: mdi:close-octagon
     web_server:
       sorting_group_id: sorting_group_help
-      sorting_weight: 4
+      sorting_weight: 5
   - platform: template
-    disabled_by_default: true # not in HA
     name: "Інформація"
     id: help_url
     icon: mdi:help-box-outline
     web_server:
       sorting_group_id: sorting_group_help  
-      sorting_weight: 5
+      sorting_weight: 6
 
 #####
 # Disable now
