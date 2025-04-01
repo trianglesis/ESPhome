@@ -10,87 +10,22 @@ esphome:
     build_flags: "-DI2C_NUM_1=I2C_NUM_0"
   on_boot:
     then:
-      - logger.log: 
-          format: "Getting all states from globals!"
-          level: INFO
-          tag: sensor.co2
-      - sensor.template.publish:
-          id: co2_ppm_1m
-          state: !lambda 'return id(co2_1min);'
-      - sensor.template.publish:
-          id: co2_ppm_2m
-          state: !lambda 'return id(co2_2min);'
-      - sensor.template.publish:
-          id: co2_ppm_3m
-          state: !lambda 'return id(co2_3min);'
-      - sensor.template.publish:
-          id: co2_ppm_4m
-          state: !lambda 'return id(co2_4min);'
-      - sensor.template.publish:
-          id: co2_ppm_5m
-          state: !lambda 'return id(co2_5min);'
-      - sensor.template.publish:
-          id: co2_ppm_15m
-          state: !lambda 'return id(co2_15min);'
-      - sensor.template.publish:
-          id: co2_ppm_30m
-          state: !lambda 'return id(co2_30min);'
-      - sensor.template.publish:
-          id: co2_ppm_1h
-          state: !lambda 'return id(co2_1h);'
-      - sensor.template.publish:
-          id: co2_ppm_24h
-          state: !lambda 'return id(co2_24h);'
       # Help info
       - text_sensor.template.publish:
           id: normal_lvl
-          state: " < 1000 ppm"
+          state: " до 1000 ppm"
       - text_sensor.template.publish:
           id: worse_lvl
-          state: " > 1200 ppm"
+          state: " до 1200 ppm"
       - text_sensor.template.publish:
           id: bad_lvl
-          state: " > 1500 ppm"
+          state: " до 1500 ppm"
       - text_sensor.template.publish:
           id: danger_lvl
-          state: " > 1900 ppm"
+          state: " більше 1900 ppm"
       - text_sensor.template.publish:
           id: help_url
           state: "https://aerostar.ua/ua/news/novosti/co2-u-primischennjahl-na-scho-vplivae-dioksid-vuglecju-u-povitri-ta-jak-zmenshiti-jogo-riven.html"
-  
-  on_shutdown:
-    then:
-      - logger.log: 
-          format: "Setting all states in globals!"
-          level: INFO
-          tag: sensor.co2
-      - globals.set:
-          id: co2_1min
-          value: !lambda 'return id(co2_ppm_1m).state;'
-      - globals.set:
-          id: co2_2min
-          value: !lambda 'return id(co2_ppm_2m).state;'
-      - globals.set:
-          id: co2_3min
-          value: !lambda 'return id(co2_ppm_3m).state;'
-      - globals.set:
-          id: co2_4min
-          value: !lambda 'return id(co2_ppm_4m).state;'
-      - globals.set:
-          id: co2_5min
-          value: !lambda 'return id(co2_ppm_5m).state;'
-      - globals.set:
-          id: co2_15min
-          value: !lambda 'return id(co2_ppm_15m).state;'
-      - globals.set:
-          id: co2_30min
-          value: !lambda 'return id(co2_ppm_30m).state;'
-      - globals.set:
-          id: co2_1h
-          value: !lambda 'return id(co2_ppm_1h).state;'
-      - globals.set:
-          id: co2_24h
-          value: !lambda 'return id(co2_ppm_24h).state;'
 
 # https://esphome.io/components/esp32
 esp32:
@@ -153,69 +88,7 @@ wifi:
       dns1: 8.8.8.8
   # Do not fast connect when portable
   # fast_connect: true
-  on_disconnect:
-    then:
-    - logger.log: 
-        format: "Setting all states in globals on WiFi disconnect!"
-        level: INFO
-        tag: sensor.co2
-    - globals.set:
-        id: co2_1min
-        value: !lambda 'return id(co2_ppm_1m).state;'
-    - globals.set:
-        id: co2_2min
-        value: !lambda 'return id(co2_ppm_2m).state;'
-    - globals.set:
-        id: co2_3min
-        value: !lambda 'return id(co2_ppm_3m).state;'
-    - globals.set:
-        id: co2_4min
-        value: !lambda 'return id(co2_ppm_4m).state;'
-    - globals.set:
-        id: co2_5min
-        value: !lambda 'return id(co2_ppm_5m).state;'
-    - globals.set:
-        id: co2_15min
-        value: !lambda 'return id(co2_ppm_15m).state;'
-    - globals.set:
-        id: co2_30min
-        value: !lambda 'return id(co2_ppm_30m).state;'
-    - globals.set:
-        id: co2_1h
-        value: !lambda 'return id(co2_ppm_1h).state;'
-    - globals.set:
-        id: co2_24h
-        value: !lambda 'return id(co2_ppm_24h).state;'
 
-# Save CO2 history levels between reboots
-globals:
-  - id: co2_1min
-    type: int
-    restore_value: true
-  - id: co2_2min
-    type: int
-    restore_value: true
-  - id: co2_3min
-    type: int
-    restore_value: true
-  - id: co2_4min
-    type: int
-    restore_value: true
-  - id: co2_5min
-    type: int
-    restore_value: true
-  - id: co2_15min
-    type: int
-    restore_value: true
-  - id: co2_30min
-    type: int
-    restore_value: true
-  - id: co2_1h
-    type: int
-    restore_value: true
-  - id: co2_24h
-    type: int
-    restore_value: true
 
 web_server:
   port: 80
@@ -301,161 +174,7 @@ sensor:
       web_server:
         sorting_group_id: sorting_group_co2
     update_interval: 5s
-  # Store values for some time
-  # 1 min
-  - platform: template
-    name: "1 min"
-    id: co2_ppm_1m
-    icon: mdi:molecule-co2
-    unit_of_measurement: ppm
-    lambda: |-
-      return id(ppm_co2).state;
-    update_interval: 60s
-    filters:
-      - max:
-          window_size: 1
-          send_every: 1
-          send_first_at: 1
-    web_server:
-      sorting_group_id: sorting_group_statistics
-      sorting_weight: 1
-  # 2 min
-  - platform: template
-    name: "2 min"
-    id: co2_ppm_2m
-    icon: mdi:molecule-co2
-    unit_of_measurement: ppm
-    lambda: |-
-      return id(ppm_co2).state;
-    update_interval: 60s
-    filters:
-      - max:
-          window_size: 2
-          send_every: 1
-          send_first_at: 1
-    web_server:
-      sorting_group_id: sorting_group_statistics
-      sorting_weight: 2
-  # 3 min
-  - platform: template
-    name: "3 min"
-    id: co2_ppm_3m
-    icon: mdi:molecule-co2
-    unit_of_measurement: ppm
-    lambda: |-
-      return id(ppm_co2).state;
-    update_interval: 60s
-    filters:
-      - max:
-          window_size: 3
-          send_every: 1
-          send_first_at: 1
-    web_server:
-      sorting_group_id: sorting_group_statistics
-      sorting_weight: 3
-  # 4 min
-  - platform: template
-    name: "4 min"
-    id: co2_ppm_4m
-    icon: mdi:molecule-co2
-    unit_of_measurement: ppm
-    lambda: |-
-      return id(ppm_co2).state;
-    update_interval: 60s
-    filters:
-      - max:
-          window_size: 4
-          send_every: 1
-          send_first_at: 1
-    web_server:
-      sorting_group_id: sorting_group_statistics
-      sorting_weight: 4
-  # 5 min
-  - platform: template
-    name: "5 min"
-    id: co2_ppm_5m
-    icon: mdi:molecule-co2
-    unit_of_measurement: ppm
-    lambda: |-
-      return id(ppm_co2).state;
-    update_interval: 60s
-    filters:
-      - max:
-          window_size: 5
-          send_every: 1
-          send_first_at: 1
-    web_server:
-      sorting_group_id: sorting_group_statistics
-      sorting_weight: 5
-  # 15 min
-  - platform: template
-    name: "15 min"
-    id: co2_ppm_15m
-    icon: mdi:molecule-co2
-    unit_of_measurement: ppm
-    lambda: |-
-      return id(ppm_co2).state;
-    update_interval: 60s
-    filters:
-      - max:
-          window_size: 15
-          send_every: 1
-          send_first_at: 1
-    web_server:
-      sorting_group_id: sorting_group_statistics
-      sorting_weight: 6
-  # 30 min
-  - platform: template
-    name: "30 min"
-    id: co2_ppm_30m
-    icon: mdi:molecule-co2
-    unit_of_measurement: ppm
-    lambda: |-
-      return id(ppm_co2).state;
-    update_interval: 60s
-    filters:
-      - max:
-          window_size: 30
-          send_every: 1
-          send_first_at: 1
-    web_server:
-      sorting_group_id: sorting_group_statistics
-      sorting_weight: 7
-  # 1 hour
-  - platform: template
-    name: "1 година"
-    id: co2_ppm_1h
-    icon: mdi:molecule-co2
-    unit_of_measurement: ppm
-    lambda: |-
-      return id(ppm_co2).state;
-    update_interval: 60s
-    filters:
-      - max:
-          window_size: 60
-          send_every: 1
-          send_first_at: 1
-    web_server:
-      sorting_group_id: sorting_group_statistics
-      sorting_weight: 8
-  # 24 hours
-  - platform: template
-    name: "24 години"
-    id: co2_ppm_24h
-    icon: mdi:molecule-co2
-    unit_of_measurement: ppm
-    lambda: |-
-      return id(ppm_co2).state;
-    update_interval: 60s
-    filters:
-      - max:
-          window_size: 1440
-          send_every: 1
-          send_first_at: 1
-    web_server:
-      sorting_group_id: sorting_group_statistics
-      sorting_weight: 9
-
+    # Other info
   - platform: uptime
     name: "Uptime"
     update_interval: 60s
@@ -464,13 +183,15 @@ sensor:
 
 text_sensor:
   - platform: template
+    disabled_by_default: true # not in HA
     name: "Нормальний рівень"
     id: normal_lvl
     icon: mdi:molecule-co2
     web_server:
       sorting_group_id: sorting_group_help  
-      sorting_weight: 1
+      sorting_weight: -1
   - platform: template
+    disabled_by_default: true # not in HA
     name: "Погіршений рівень"
     id: worse_lvl
     icon: mdi:alert
@@ -478,6 +199,7 @@ text_sensor:
       sorting_group_id: sorting_group_help  
       sorting_weight: 2
   - platform: template
+    disabled_by_default: true # not in HA
     name: "Поганий - провітрювання необхідно!"
     id: bad_lvl
     icon: mdi:account-alert
@@ -485,6 +207,7 @@ text_sensor:
       sorting_group_id: sorting_group_help  
       sorting_weight: 3
   - platform: template
+    disabled_by_default: true # not in HA
     name: "Небезпечний - провітрити невідкладно!"
     id: danger_lvl
     icon: mdi:close-octagon
@@ -492,6 +215,7 @@ text_sensor:
       sorting_group_id: sorting_group_help
       sorting_weight: 4
   - platform: template
+    disabled_by_default: true # not in HA
     name: "Інформація"
     id: help_url
     icon: mdi:help-box-outline
@@ -502,8 +226,7 @@ text_sensor:
 #####
 # Disable now
 #### 
-
-button:
+# button:
 #   - platform: restart
 #     name: "Restart"
 #     web_server:
@@ -513,61 +236,16 @@ button:
 #     icon: "mdi:power"
 #     web_server:
 #       sorting_group_id: sorting_group_service
-
-  - platform: template
-    name: "Save states in globals"
-    icon: "mdi:content-save-all"
-    on_press:
-        then:
-        - logger.log: 
-            format: "Saving all states in globals!"
-            level: INFO
-            tag: sensor.co2
-        - delay: 3s
-        - globals.set:
-            id: co2_1min
-            value: !lambda 'return id(co2_ppm_1m).state;'
-        - globals.set:
-            id: co2_2min
-            value: !lambda 'return id(co2_ppm_2m).state;'
-        - globals.set:
-            id: co2_3min
-            value: !lambda 'return id(co2_ppm_3m).state;'
-        - globals.set:
-            id: co2_4min
-            value: !lambda 'return id(co2_ppm_4m).state;'
-        - globals.set:
-            id: co2_5min
-            value: !lambda 'return id(co2_ppm_5m).state;'
-        - globals.set:
-            id: co2_15min
-            value: !lambda 'return id(co2_ppm_15m).state;'
-        - globals.set:
-            id: co2_30min
-            value: !lambda 'return id(co2_ppm_30m).state;'
-        - globals.set:
-            id: co2_1h
-            value: !lambda 'return id(co2_ppm_1h).state;'
-        - globals.set:
-            id: co2_24h
-            value: !lambda 'return id(co2_ppm_24h).state;'
-        - logger.log: 
-            format: "Saved all states in globals!"
-            level: INFO
-            tag: sensor.co2
-    web_server:
-      sorting_group_id: sorting_group_service
-  
-  # https://github.com/esphome/esphome/pull/8160
-  # - platform: template
-  #   name: "Enable AP"
-  #   icon: "mdi:wifi"
-  #   on_press:
-  #       then:
-  #       - logger.log: "Starting Wifi AP directly!"
-  #       - lambda: id(wifi_component).enable();
-  #   web_server:
-  #     sorting_group_id: sorting_group_service
+#   https://github.com/esphome/esphome/pull/8160
+#   - platform: template
+#     name: "Enable AP"
+#     icon: "mdi:wifi"
+#     on_press:
+#         then:
+#         - logger.log: "Starting Wifi AP directly!"
+#         - lambda: id(wifi_component).enable();
+#     web_server:
+#       sorting_group_id: sorting_group_service
 
 # https://gist.github.com/baldowl/a413c2a08c10bc62c1a72328caac98c1?permalink_comment_id=5496287#gistcomment-5496287
 light:
