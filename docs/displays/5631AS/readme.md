@@ -107,6 +107,13 @@ Same as before, for `pin 3` - swich to ON
 Use this YAML to test the display and check pinout.
 It's not ready to show real symbols or numbers, it's just a demo.
 
+
 [YAML For ESPHome test](esp32-c6-2_7seg_display.yaml)
+
+- Use switches to test all options.
+
+[main.c file for ESP IDF](main.c)
+
+- Count works, but I have not yet get it to show all three digists!
 
 ![Full blast](IMG_20250403_132211339.jpg)
