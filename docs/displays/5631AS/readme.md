@@ -66,11 +66,13 @@ Show any integer at DIG2 and DIG3
  9 (DIG2)   - 0
  12 (DIG1)  - 1
 
-Show any integer at DIG2, DIG2 and DIG3
+Show any integer at DIG1, DIG2 and DIG3
  8 (DIG3)   - 0 
  9 (DIG2)   - 0
  12 (DIG1)  - 0
 ```
+
+Can be used in any reading direction Start-End or End-Start.
 
 ### Draw integer
 
