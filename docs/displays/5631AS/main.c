@@ -115,23 +115,6 @@ void led_control_hsv(int i, led_strip_handle_t led_strip) {
     ESP_ERROR_CHECK(led_strip_set_pixel_hsv(led_strip, i, hue, saturation, brightLvl));
 }
 
-void led_blink(bool led_on_off, led_strip_handle_t led_strip) {
-    // Use to show board alive
-    if (led_on_off) {
-        /* Set the LED pixel using RGB from 0 (0%) to 255 (100%) for each color */
-        for (int i = 0; i < LED_STRIP_LED_COUNT; i++) {
-            led_control_hsv(i, led_strip);
-        }
-        /* Refresh the strip to send data */
-        ESP_ERROR_CHECK(led_strip_refresh(led_strip));
-        // ESP_LOGI(TAG, "LED ON!");
-    } else {
-        /* Set all LED off to clear all pixels */
-        ESP_ERROR_CHECK(led_strip_clear(led_strip));
-        // ESP_LOGI(TAG, "LED OFF!");
-    }
-}
-
 void beep_setup() {
     // Clean the PIN and setup usage
     gpio_reset_pin(GPIO_NUM_23);
@@ -178,12 +161,27 @@ void display_setup() {
 }
 
 void digit_display() {
+    // Variants used:
+    // Only activate one poisiton at time - does not work
+    // DIG3, DIG2, DIG1
+    // 0     1     1   - On (DIG3), Off (DIG2, DIG1)
+    // 1     0     1   - On (DIG2), Off (DIG1, DIG3)
+    // 1     1     0   - On (DIG1), Off (DIG2, DIG3)
+    // Activate 1,2,3 poisitons simultaneously
+    // 0     1     1   - On (DIG3)
+    // 0     0     1   - On (DIG3, DIG2)
+    // 0     0     0   - On (DIG3, DIG2, DIG1)
+    // Reversed
+    // 1     1     0   - On (DIG1), Off (DIG2, DIG3)
+    // 1     0     0   - On (DIG1, DIG2), Off (DIG3)
+    // All Off
+    // 1     1     1   - Off (DIG3, DIG2, DIG1)
     for (int j = 0; j < 3; j++) {
         int c = number[j] - '0';
         if (j == 0) {
             gpio_set_level(digit_select[0], 0);
-            gpio_set_level(digit_select[1], 0);
-            gpio_set_level(digit_select[2], 0);
+            gpio_set_level(digit_select[1], 1);
+            gpio_set_level(digit_select[2], 1);
         }
         else if (j == 1) {
             gpio_set_level(digit_select[0], 0);
@@ -192,22 +190,19 @@ void digit_display() {
         }
         else if (j == 2) {
             gpio_set_level(digit_select[0], 0);
-            gpio_set_level(digit_select[1], 1);
-            gpio_set_level(digit_select[2], 1);
+            gpio_set_level(digit_select[1], 0);
+            gpio_set_level(digit_select[2], 0);
         }
         for (int i = 0; i < 7; i++) {
             gpio_set_level(seven_seg_pins[i], numbers[c][i]);
         }
         // vTaskDelay(pdMS_TO_TICKS(1));
-        vTaskDelay(1);
+        // vTaskDelay(1);
     }
 }
 
 void count_blinks_display(bool led_on_off) {
     // 7seg 3 digit display used to count blinks from 0 to 999 and reset
-    
-    // WHAT DOES NOT WOTK YET: Cannot display "10" and above =(
-    // The display is not in while loop, ans that's why it only can shiow the last digit consistently, but first two are blinking fast.
     if (led_on_off) {
         // Run only at True
         count += 1;
@@ -216,19 +211,16 @@ void count_blinks_display(bool led_on_off) {
             number[0] = '0';
             number[1] = '0';
             number[2] = count + '0';
-            // ESP_LOGI(TAG, "Number to 10 \nnum 0: %d \nnum 1: %d \nnum 2: %d ", number[0], number[1], number[2]);
         }
         else if ((count >= 10) && (count <= 99)) {
             number[0] = '0';
             number[1] = (count / 10) + '0';
             number[2] = (count % 10) + '0';
-            // ESP_LOGI(TAG, "Number to 99 \nnum 0: %d \nnum 1: %d \nnum 2: %d ", number[0], number[1], number[2]);
         }
         else if ((count >= 100) && (count <= 999)) {
             number[0] = (count / 100) + '0';
             number[1] = ((count % 100) / 10) + '0';
             number[2] = (count % 10) + '0';
-            // ESP_LOGI(TAG, "Number to 999 \nnum 0: %d \nnum 1: %d \nnum 2: %d ", number[0], number[1], number[2]);
         }
         else {
             ESP_LOGI(TAG, "Number reset to 000 at %d", count);
@@ -237,6 +229,7 @@ void count_blinks_display(bool led_on_off) {
             number[1] = '0';
             number[2] = '0';
         }
+        ESP_LOGI(TAG, "Draw number: %s ", number);
         // Count blinks draw display
         for (size_t i = 0; i < 12; i++)
         {
@@ -246,23 +239,42 @@ void count_blinks_display(bool led_on_off) {
     }
 }
 
+void led_blink(bool led_on_off, led_strip_handle_t led_strip) {
+    // Use to show board alive
+    if (led_on_off) {
+        /* Set the LED pixel using RGB from 0 (0%) to 255 (100%) for each color */
+        for (int i = 0; i < LED_STRIP_LED_COUNT; i++) {
+            led_control_hsv(i, led_strip);
+        }
+        /* Refresh the strip to send data */
+        ESP_ERROR_CHECK(led_strip_refresh(led_strip));
+        // ESP_LOGI(TAG, "LED ON!");
+
+        // count blinks
+        count_blinks_display(led_on_off);
+        // Beep pin
+        pin_beep(led_on_off);
+
+    } else {
+        /* Set all LED off to clear all pixels */
+        ESP_ERROR_CHECK(led_strip_clear(led_strip));
+        // ESP_LOGI(TAG, "LED OFF!");
+    }
+}
+
 void app_main(void)
 {
     // Set display ping ans draw 888 for 1 second at the beggining.
     display_setup();
     // Setup BIP pin
     beep_setup();
-
+    // Led setup
     led_strip_handle_t led_strip = configure_led();
     bool led_on_off = false;
     ESP_LOGI(TAG, "Start blinking LED and Beep");
     while (1) {
         // Led blink
         led_blink(led_on_off, led_strip);
-        // count blinks
-        count_blinks_display(led_on_off);
-        // Beep pin
-        pin_beep(led_on_off);
         // Reset
         led_on_off = !led_on_off;
         // Sleep
