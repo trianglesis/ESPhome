@@ -151,8 +151,8 @@ sensor:
       on_value:
         then:
           - lambda: |-
-              float co2 = std::min(float(2000), x);
-              auto t = (co2-440)/(2000 - 440);
+              float co2 = std::min(float(2200), x);
+              auto t = (co2-440)/(2200 - 440);
               auto interpolated = ESPHSVColor(uint8_t((1-t)*96), 255, 32);
               auto inter_rgb = interpolated.to_rgb();
 
