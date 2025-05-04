@@ -1,10 +1,10 @@
 substitutions:
-  name: "bedroom-co2"
-  friendly_name: "bedroom-co2"
+  name: "kitchen-co2"
+  friendly_name: "kitchen-co2"
 
 esphome:
-  name: "bedroom-co2"
-  friendly_name: "bedroom-co2"
+  name: "kitchen-co2"
+  friendly_name: "kitchen-co2"
   # https://github.com/esphome/esphome/pull/1651
   platformio_options:
     build_flags: "-DI2C_NUM_1=I2C_NUM_0"
@@ -175,58 +175,58 @@ sensor:
       web_server:
         sorting_group_id: sorting_group_co2
   # BME 680
-  - platform: bme680
-    i2c_id: bus_a
-    address: 0x77
-    update_interval: 10s
-    id: bme680_esp32c6
-    temperature:
-      name: "Temperature"
-      id: "temperature_bme680"
-      oversampling: 16x
-      state_class: 'measurement'
-      device_class: "temperature"
-      accuracy_decimals: 2
-      filters:
-      - skip_initial: 3
-      web_server:
-        sorting_group_id: sorting_group_temp_hum
-    pressure:
-      name: "Pressure"
-      id: "pressure_bme680"
-      state_class: 'measurement'
-      device_class: "pressure"
-      accuracy_decimals: 2
-      filters:
-      - skip_initial: 3
-      web_server:
-        sorting_group_id: sorting_group_temp_hum
-    humidity:
-      name: "Humidity"
-      id: "humidity_bme680"
-      state_class: 'measurement'
-      device_class: "humidity"
-      accuracy_decimals: 2
-      filters:
-      - skip_initial: 3
-      web_server:
-        sorting_group_id: sorting_group_temp_hum
-    gas_resistance:
-      name: "Gas Resistance"
-      id: "gas_resistance_bme680"
-      web_server:
-        sorting_group_id: sorting_group_bme
+  # - platform: bme680
+  #   i2c_id: bus_a
+  #   address: 0x77
+  #   update_interval: 10s
+  #   id: bme680_esp32c6
+  #   temperature:
+  #     name: "Temperature"
+  #     id: "temperature_bme680"
+  #     oversampling: 16x
+  #     state_class: 'measurement'
+  #     device_class: "temperature"
+  #     accuracy_decimals: 2
+  #     filters:
+  #     - skip_initial: 3
+  #     web_server:
+  #       sorting_group_id: sorting_group_temp_hum
+  #   pressure:
+  #     name: "Pressure"
+  #     id: "pressure_bme680"
+  #     state_class: 'measurement'
+  #     device_class: "pressure"
+  #     accuracy_decimals: 2
+  #     filters:
+  #     - skip_initial: 3
+  #     web_server:
+  #       sorting_group_id: sorting_group_temp_hum
+  #   humidity:
+  #     name: "Humidity"
+  #     id: "humidity_bme680"
+  #     state_class: 'measurement'
+  #     device_class: "humidity"
+  #     accuracy_decimals: 2
+  #     filters:
+  #     - skip_initial: 3
+  #     web_server:
+  #       sorting_group_id: sorting_group_temp_hum
+  #   gas_resistance:
+  #     name: "Gas Resistance"
+  #     id: "gas_resistance_bme680"
+  #     web_server:
+  #       sorting_group_id: sorting_group_bme
 
-  - platform: template
-    name: "Indoor Air Quality"
-    id: iaq
-    icon: "mdi:gauge"
-    web_server:
-      sorting_group_id: sorting_group_aqi
-    # calculation: comp_gas = log(R_gas[ohm]) + 0.04 log(Ohm)/%rh * hum[%rh]
-    lambda: |-
-      return log(id(gas_resistance_bme680).state) + 0.04 *  id(humidity_bme680).state;
-    state_class: "measurement"
+  # - platform: template
+  #   name: "Indoor Air Quality"
+  #   id: iaq
+  #   icon: "mdi:gauge"
+  #   web_server:
+  #     sorting_group_id: sorting_group_aqi
+  #   # calculation: comp_gas = log(R_gas[ohm]) + 0.04 log(Ohm)/%rh * hum[%rh]
+  #   lambda: |-
+  #     return log(id(gas_resistance_bme680).state) + 0.04 *  id(humidity_bme680).state;
+  #   state_class: "measurement"
 
 
   - platform: uptime
@@ -254,36 +254,36 @@ sensor:
 
 text_sensor:
   # BME680
-  - platform: template
-    name: "IAQ Classification"
-    icon: "mdi:checkbox-marked-circle-outline"
-    lambda: |-
-      if (int(id(iaq).state) <= 50) {
-        return {"Excellent"};
-      }
-      else if (int(id(iaq).state) <= 100) {
-        return {"Good"};
-      }
-      else if (int(id(iaq).state) <= 150) {
-        return {"Lightly polluted"};
-      }
-      else if (int(id(iaq).state) <= 200) {
-        return {"Moderately polluted"};
-      }
-      else if (int(id(iaq).state) <= 250) {
-        return {"Heavily polluted"};
-      }
-      else if (int(id(iaq).state) <= 350) {
-        return {"Severely polluted"};
-      }
-      else if (int(id(iaq).state) <= 500) {
-        return {"Extremely polluted"};
-      }
-      else {
-        return {"unknown"};
-      }
-    web_server:
-      sorting_group_id: sorting_group_aqi
+  # - platform: template
+  #   name: "IAQ Classification"
+  #   icon: "mdi:checkbox-marked-circle-outline"
+  #   lambda: |-
+  #     if (int(id(iaq).state) <= 50) {
+  #       return {"Excellent"};
+  #     }
+  #     else if (int(id(iaq).state) <= 100) {
+  #       return {"Good"};
+  #     }
+  #     else if (int(id(iaq).state) <= 150) {
+  #       return {"Lightly polluted"};
+  #     }
+  #     else if (int(id(iaq).state) <= 200) {
+  #       return {"Moderately polluted"};
+  #     }
+  #     else if (int(id(iaq).state) <= 250) {
+  #       return {"Heavily polluted"};
+  #     }
+  #     else if (int(id(iaq).state) <= 350) {
+  #       return {"Severely polluted"};
+  #     }
+  #     else if (int(id(iaq).state) <= 500) {
+  #       return {"Extremely polluted"};
+  #     }
+  #     else {
+  #       return {"unknown"};
+  #     }
+  #   web_server:
+  #     sorting_group_id: sorting_group_aqi
   # Other
   - platform: wifi_info
     ip_address:
