@@ -11,7 +11,7 @@ esphome:
   min_version: 2024.6.0
   project:
     name: "syssi.esphome-smg-ii"
-    version: 1.2.0
+    version: 1.3.0
 
 esp32:
   board: esp32dev
@@ -30,14 +30,14 @@ ota:
   - platform: esphome
     password: !secret ota_password
 wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+  networks:
+  - ssid: !secret wifi_ssid
+    password: !secret wifi_password
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "${friendly_name}"
     password: !secret fall_back_wifi_password
-  reboot_timeout: 900s
-  fast_connect: true
+  reboot_timeout: 300s
 
 captive_portal:
 
@@ -67,9 +67,9 @@ web_server:
   - id: sorting_group_diagnostic
     name: "Diagnostic info"
     sorting_weight: 60
-  - id: sorting_group_pv_options
-    name: "PV Options and sensors"
-    sorting_weight: 90
+  # - id: sorting_group_pv_options
+  #   name: "PV Options and sensors"
+  #   sorting_weight: 90
 
 uart:
   - id: uart_0
@@ -102,20 +102,54 @@ sensor:
 
   - platform: uptime
     name: "${friendly_name} Uptime"
+    update_interval: 60s
     web_server:
       sorting_group_id: sorting_group_diagnostic
 
-  - platform: total_daily_energy
-    name: "${name} PV energy today"
-    restore: true
-    icon: mdi:counter
-    power_id: smg0_pv_average_power
-    filters:
-      # Multiplication factor from W to kW is 0.001
-      - multiply: 0.001
-    unit_of_measurement: kWh
-    web_server:
-      sorting_group_id: sorting_group_invertor_sensors
+  # - platform: total_daily_energy
+  #   name: "${name} PV energy today"
+  #   restore: true
+  #   icon: mdi:counter
+  #   power_id: smg0_pv_average_power
+  #   filters:
+  #     # Multiplication factor from W to kW is 0.001
+  #     - multiply: 0.001
+  #   unit_of_measurement: kWh
+  #   web_server:
+  #     sorting_group_id: sorting_group_invertor_sensors
+
+  # Added manually by me from: https://github.com/syssi/esphome-smg-ii/blob/49f1e75cde15520c457650623855242f192477dc/esp32-example.yaml
+  - platform: template
+    name: "${name} discharging power"
+    id: smg0_discharging_power
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    icon: mdi:battery-arrow-down
+    # Gets updated on value of smg0_battery_average_power
+    update_interval: never
+    lambda: |-
+      if (isnan(id(smg0_battery_average_power).state)) {
+        return {};
+      }
+      auto power = id(smg0_battery_average_power).state;
+      return (power < 0.0f) ? -power : 0.0f;
+
+  - platform: template
+    name: "${name} charging power"
+    id: smg0_charging_power
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    icon: mdi:battery-charging
+    # Gets updated on value of smg0_battery_average_power
+    update_interval: never
+    lambda: |-
+      if (isnan(id(smg0_battery_average_power).state)) {
+        return {};
+      }
+      auto power = id(smg0_battery_average_power).state;
+      return (power > 0.0f) ? power : 0.0f;
 
   # Fault code                                                    ULong 100 2 R
   - platform: modbus_controller
@@ -125,6 +159,7 @@ sensor:
     register_type: holding
     value_type: U_DWORD
     accuracy_decimals: 0
+    icon: mdi:alert-circle
     web_server:
       sorting_group_id: sorting_group_general_info
 
@@ -136,6 +171,7 @@ sensor:
     register_type: holding
     value_type: U_DWORD
     accuracy_decimals: 0
+    icon: mdi:alert-circle
     web_server:
       sorting_group_id: sorting_group_general_info
 
@@ -153,6 +189,7 @@ sensor:
     register_type: holding
     value_type: U_WORD
     accuracy_decimals: 0
+    icon: mdi:information
     web_server:
       sorting_group_id: sorting_group_general_info
 
@@ -373,7 +410,7 @@ sensor:
   # Battery average Current                              0.1A     Int   216 1 R
   - platform: modbus_controller
     modbus_controller_id: smg0
-    name: "${name} battery average Current"
+    name: "${name} battery average Current A"
     address: 216
     register_type: holding
     value_type: S_WORD
@@ -390,6 +427,7 @@ sensor:
   - platform: modbus_controller
     modbus_controller_id: smg0
     name: "${name} battery average power"
+    id: smg0_battery_average_power
     address: 217
     register_type: holding
     value_type: S_WORD
@@ -399,67 +437,70 @@ sensor:
     accuracy_decimals: 0
     web_server:
       sorting_group_id: sorting_group_battery_sensors
+    on_value:
+      - component.update: smg0_discharging_power
+      - component.update: smg0_charging_power
 
-  # PV average voltage                                   0.1V     Int   219 1 R
-  - platform: modbus_controller
-    modbus_controller_id: smg0
-    name: "${name} pv average voltage"
-    address: 219
-    register_type: holding
-    value_type: S_WORD
-    unit_of_measurement: "V"
-    device_class: voltage
-    state_class: measurement
-    accuracy_decimals: 1
-    filters:
-      - multiply: 0.1
-    web_server:
-      sorting_group_id: sorting_group_pv_options
+  # # PV average voltage                                   0.1V     Int   219 1 R
+  # - platform: modbus_controller
+  #   modbus_controller_id: smg0
+  #   name: "${name} pv average voltage"
+  #   address: 219
+  #   register_type: holding
+  #   value_type: S_WORD
+  #   unit_of_measurement: "V"
+  #   device_class: voltage
+  #   state_class: measurement
+  #   accuracy_decimals: 1
+  #   filters:
+  #     - multiply: 0.1
+  #   web_server:
+  #     sorting_group_id: sorting_group_pv_options
 
-  # PV average current                                   0.1A     Int   220 1 R
-  - platform: modbus_controller
-    modbus_controller_id: smg0
-    name: "${name} pv average current"
-    address: 220
-    register_type: holding
-    value_type: S_WORD
-    unit_of_measurement: "A"
-    device_class: current
-    state_class: measurement
-    accuracy_decimals: 1
-    filters:
-      - multiply: 0.1
-    web_server:
-      sorting_group_id: sorting_group_pv_options
+  # # PV average current                                   0.1A     Int   220 1 R
+  # - platform: modbus_controller
+  #   modbus_controller_id: smg0
+  #   name: "${name} pv average current"
+  #   address: 220
+  #   register_type: holding
+  #   value_type: S_WORD
+  #   unit_of_measurement: "A"
+  #   device_class: current
+  #   state_class: measurement
+  #   accuracy_decimals: 1
+  #   filters:
+  #     - multiply: 0.1
+  #   web_server:
+  #     sorting_group_id: sorting_group_pv_options
 
-  # PV average power                                     1W       Int   223 1 R
-  - platform: modbus_controller
-    modbus_controller_id: smg0
-    id: smg0_pv_average_power
-    name: "${name} pv average power"
-    address: 223
-    register_type: holding
-    value_type: S_WORD
-    unit_of_measurement: "W"
-    device_class: power
-    state_class: measurement
-    accuracy_decimals: 0
-    web_server:
-      sorting_group_id: sorting_group_pv_options
+  # # PV average power                                     1W       Int   223 1 R
+  # - platform: modbus_controller
+  #   modbus_controller_id: smg0
+  #   id: smg0_pv_average_power
+  #   name: "${name} pv average power"
+  #   address: 223
+  #   register_type: holding
+  #   value_type: S_WORD
+  #   unit_of_measurement: "W"
+  #   device_class: power
+  #   state_class: measurement
+  #   accuracy_decimals: 0
+  #   web_server:
+  #     sorting_group_id: sorting_group_pv_options
 
-  # PV charging average power                            1W       Int   224 1 R
-  - platform: modbus_controller
-    modbus_controller_id: smg0
-    name: "${name} pv charging average power"
-    address: 224
-    register_type: holding
-    value_type: S_WORD
-    unit_of_measurement: "W"
-    device_class: power
-    state_class: measurement
-    accuracy_decimals: 0
-    web_server:
-      sorting_group_id: sorting_group_pv_options
+  # # PV charging average power                            1W       Int   224 1 R
+  # - platform: modbus_controller
+  #   modbus_controller_id: smg0
+  #   name: "${name} pv charging average power"
+  #   address: 224
+  #   register_type: holding
+  #   value_type: S_WORD
+  #   unit_of_measurement: "W"
+  #   device_class: power
+  #   state_class: measurement
+  #   accuracy_decimals: 0
+  #   web_server:
+  #     sorting_group_id: sorting_group_pv_options
 
   # Load percentage                                      1%       Int   225 1 R
   - platform: modbus_controller
@@ -472,6 +513,7 @@ sensor:
     # device_class: battery
     state_class: measurement
     accuracy_decimals: 0
+    icon: mdi:percent
     web_server:
       sorting_group_id: sorting_group_general_info
 
@@ -549,21 +591,21 @@ sensor:
     web_server:
       sorting_group_id: sorting_group_invertor_sensors
 
-  # PV charging average current                          0.1A     Int   234 1 R
-  - platform: modbus_controller
-    modbus_controller_id: smg0
-    name: "${name} pv charging average current"
-    address: 234
-    register_type: holding
-    value_type: S_WORD
-    unit_of_measurement: "A"
-    device_class: current
-    state_class: measurement
-    accuracy_decimals: 1
-    filters:
-      - multiply: 0.1
-    web_server:
-      sorting_group_id: sorting_group_pv_options
+  # # PV charging average current                          0.1A     Int   234 1 R
+  # - platform: modbus_controller
+  #   modbus_controller_id: smg0
+  #   name: "${name} pv charging average current"
+  #   address: 234
+  #   register_type: holding
+  #   value_type: S_WORD
+  #   unit_of_measurement: "A"
+  #   device_class: current
+  #   state_class: measurement
+  #   accuracy_decimals: 1
+  #   filters:
+  #     - multiply: 0.1
+  #   web_server:
+  #     sorting_group_id: sorting_group_pv_options
 
   # # Output voltage                                        0.1V    Uint  320 1 R/W
   # - platform: modbus_controller
@@ -733,6 +775,7 @@ sensor:
     web_server:
       sorting_group_id: sorting_group_invertor_sensors
 
+
 select:
   # Output Mode                                                   Uint  300 1 R/W 0: Single, 1: Parallel, 2: 3 Phase-P1, 3: 3 Phase-P2, 4: 3 Phase-P3
   - platform: modbus_controller
@@ -741,6 +784,8 @@ select:
     use_write_multiple: true
     address: 300
     value_type: U_WORD
+    entity_category: config
+    icon: mdi:cog
     optionsmap:
       "Single": 0
       "Parallel": 1
@@ -757,6 +802,8 @@ select:
     use_write_multiple: true
     address: 301
     value_type: U_WORD
+    entity_category: config
+    icon: mdi:cog
     optionsmap:
       "Utility-PV-Battery (UTI)": 0
       "PV-Utility-Battery (SOL)": 1
@@ -772,6 +819,8 @@ select:
     use_write_multiple: true
     address: 302
     value_type: U_WORD
+    entity_category: config
+    icon: mdi:cog
     optionsmap:
       "Wide range": 0
       "Narrow range": 1
@@ -785,6 +834,8 @@ select:
     use_write_multiple: true
     address: 303
     value_type: U_WORD
+    entity_category: config
+    icon: mdi:cog
     optionsmap:
       "Silent": 0
       "Beep on input source changes, warnings and faults": 1
@@ -800,6 +851,8 @@ select:
     use_write_multiple: true
     address: 305
     value_type: U_WORD
+    entity_category: config
+    icon: mdi:cog
     optionsmap:
       "Timed off": 0
       "Always on": 1
@@ -813,6 +866,8 @@ select:
     use_write_multiple: true
     address: 331
     value_type: U_WORD
+    entity_category: config
+    icon: mdi:cog
     optionsmap:
       "Utility priority": 0
       "PV priority": 1
@@ -828,12 +883,32 @@ select:
     use_write_multiple: true
     address: 406
     value_type: U_WORD
+    entity_category: config
+    icon: mdi:cog
     optionsmap:
       "Local and remotely turn-on allowed": 0
       "Local turn-on only": 1
       "Remote turn-on only": 2
     web_server:
       sorting_group_id: sorting_group_invertor_options
+
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} battery type"
+    use_write_multiple: true
+    address: 322
+    value_type: U_WORD
+    entity_category: config
+    icon: mdi:cog
+    optionsmap:
+      "AGM": 0
+      "FLD": 1
+      "USER": 2
+      "Li1": 3
+      "Li2": 4
+      "Li3": 5
+      "Li4": 6
+      "Lib": 8
 
 switch:
   # LCD automatically returns to the homepage                     Uint  306 1 R/W 0: Do not return automatically, 1: Automatically return after 1 minute
@@ -844,6 +919,7 @@ switch:
     address: 306
     register_type: holding
     bitmask: 1
+    icon: mdi:toggle-switch
     web_server:
       sorting_group_id: sorting_group_invertor_options
 
@@ -855,6 +931,7 @@ switch:
     address: 307
     register_type: holding
     bitmask: 1
+    icon: mdi:toggle-switch
     web_server:
       sorting_group_id: sorting_group_invertor_options
 
@@ -866,6 +943,7 @@ switch:
     address: 308
     register_type: holding
     bitmask: 1
+    icon: mdi:toggle-switch
     web_server:
       sorting_group_id: sorting_group_invertor_options
 
@@ -877,6 +955,7 @@ switch:
     address: 309
     register_type: holding
     bitmask: 1
+    icon: mdi:toggle-switch
     web_server:
       sorting_group_id: sorting_group_invertor_options
 
@@ -888,6 +967,7 @@ switch:
     address: 310
     register_type: holding
     bitmask: 1
+    icon: mdi:toggle-switch
     web_server:
       sorting_group_id: sorting_group_invertor_options
 
@@ -899,6 +979,7 @@ switch:
     address: 313
     register_type: holding
     bitmask: 1
+    icon: mdi:toggle-switch
     web_server:
       sorting_group_id: sorting_group_invertor_options
 
@@ -910,6 +991,7 @@ switch:
     address: 420
     register_type: holding
     bitmask: 1
+    icon: mdi:toggle-switch
     web_server:
       sorting_group_id: sorting_group_invertor_options
 
@@ -943,6 +1025,7 @@ text_sensor:
     register_count: 2
     response_size: 4
     raw_encode: HEXBYTES
+    icon: mdi:alert-circle
     lambda: |-
       static const uint8_t FAULTS_SIZE = 27;
       static const char *const FAULTS[FAULTS_SIZE] = {
@@ -1001,6 +1084,7 @@ text_sensor:
     register_count: 2
     response_size: 4
     raw_encode: HEXBYTES
+    icon: mdi:alert-circle
     lambda: |-
       static const uint8_t WARNINGS_SIZE = 19;
       static const char *const WARNINGS[WARNINGS_SIZE] = {
@@ -1049,6 +1133,7 @@ text_sensor:
     address: 201
     register_type: holding
     raw_encode: HEXBYTES
+    icon: mdi:information
     lambda: |-
       uint16_t value = modbus_controller::word_from_hex_str(x, 0);
       switch (value) {
@@ -1077,6 +1162,8 @@ number:
     max_value: 240.0
     step: 0.1
     unit_of_measurement: "V"
+    entity_category: config
+    icon: mdi:cog
     lambda: "return x * 0.1f;"
     write_lambda: |-
       return x * 10.0f;
@@ -1095,6 +1182,8 @@ number:
     max_value: 60.0
     step: 0.01
     unit_of_measurement: "Hz"
+    entity_category: config
+    icon: mdi:cog
     lambda: "return x * 0.01f;"
     write_lambda: |-
       return x * 100.0f;
@@ -1113,6 +1202,8 @@ number:
     max_value: 29.0
     step: 0.1
     unit_of_measurement: "V"
+    entity_category: config
+    icon: mdi:battery-high
     lambda: "return x * 0.1f;"
     write_lambda: |-
       return x * 10.0f;
@@ -1131,6 +1222,8 @@ number:
     max_value: 29.0
     step: 0.1
     unit_of_measurement: "V"
+    entity_category: config
+    icon: mdi:battery-high
     lambda: "return x * 0.1f;"
     write_lambda: |-
       return x * 10.0f;
@@ -1149,6 +1242,8 @@ number:
     max_value: 29.0
     step: 0.1
     unit_of_measurement: "V"
+    entity_category: config
+    icon: mdi:battery
     lambda: "return x * 0.1f;"
     write_lambda: |-
       return x * 10.0f;
@@ -1167,6 +1262,8 @@ number:
     max_value: 29.0
     step: 0.1
     unit_of_measurement: "V"
+    entity_category: config
+    icon: mdi:battery-low
     lambda: "return x * 0.1f;"
     write_lambda: |-
       return x * 10.0f;
@@ -1185,6 +1282,8 @@ number:
     max_value: 29.0
     step: 0.1
     unit_of_measurement: "V"
+    entity_category: config
+    icon: mdi:battery-low
     lambda: "return x * 0.1f;"
     write_lambda: |-
       return x * 10.0f;
@@ -1203,6 +1302,8 @@ number:
     max_value: 29.0
     step: 0.1
     unit_of_measurement: "V"
+    entity_category: config
+    icon: mdi:battery-low
     lambda: "return x * 0.1f;"
     write_lambda: |-
       return x * 10.0f;
@@ -1221,6 +1322,8 @@ number:
     max_value: 80.0
     step: 0.1
     unit_of_measurement: "A"
+    entity_category: config
+    icon: mdi:battery-charging
     lambda: "return x * 0.1f;"
     write_lambda: |-
       return x * 10.0f;
@@ -1239,6 +1342,8 @@ number:
     max_value: 80.0
     step: 0.1
     unit_of_measurement: "A"
+    entity_category: config
+    icon: mdi:battery-charging
     lambda: "return x * 0.1f;"
     write_lambda: |-
       return x * 10.0f;
@@ -1257,6 +1362,8 @@ number:
     max_value: 29.0
     step: 0.1
     unit_of_measurement: "V"
+    entity_category: config
+    icon: mdi:battery
     lambda: "return x * 0.1f;"
     write_lambda: |-
       return x * 10.0f;
@@ -1275,6 +1382,8 @@ number:
     max_value: 900.0
     step: 1
     unit_of_measurement: "min"
+    entity_category: config
+    icon: mdi:timer
     web_server:
       sorting_group_id: sorting_group_invertor_options
 
@@ -1290,6 +1399,8 @@ number:
     max_value: 900.0
     step: 1
     unit_of_measurement: "min"
+    entity_category: config
+    icon: mdi:timer
     web_server:
       sorting_group_id: sorting_group_invertor_options
 
@@ -1305,9 +1416,16 @@ number:
     max_value: 90.0
     step: 1
     unit_of_measurement: "day"
-    web_server:
-      sorting_group_id: sorting_group_invertor_options
+    entity_category: config
+    icon: mdi:timer
 
-# Button entities
-
-  # Exit the fault mode                                           Uint  426   W   1: Exit the fault state(only when the inverter enters the fault mode , it could be available)
+button:
+  # Exit the fault mode                                           Uint  426   W   1: Exit the fault state
+  - platform: template
+    name: "${name} exit fault state"
+    icon: mdi:restore
+    on_press:
+      then:
+        - lambda: |-
+            auto cmd = esphome::modbus_controller::ModbusCommandItem::create_write_multiple_command(id(smg0), 426, 1, {1});
+            id(smg0)->queue_command(cmd);
