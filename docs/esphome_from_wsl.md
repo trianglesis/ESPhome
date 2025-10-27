@@ -18,8 +18,10 @@ cd esphome
 virtualenv --python=/usr/bin/python3 venv
 # Activate
 source venv/bin/activate
+source venv_esp_old/bin/activate
 # Install ESPHome
 pip3 install esphome
+pip3 install esphome==2025.5.0
 
 # Upgrade:
 pip install --upgrade esphome
@@ -97,6 +99,10 @@ usbipd attach --wsl --busid 11-1
 ```shell
 esphome config my_proj/esp32-c6-1.yaml
 esphome compile my_proj/esp32-c6-1.yaml
+
+esphome compile my_proj/led-1.yaml
+esphome compile my_proj/led-2.yaml
+esphome compile my_proj/led-3.yaml
 
 # Cant upload from WSL without USB bind
 esphome upload my_proj/esp32-c6-1.yaml
