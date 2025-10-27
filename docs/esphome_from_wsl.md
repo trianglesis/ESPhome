@@ -31,6 +31,8 @@ pip install --upgrade esphome
 Version: 2024.9.1
 ```
 
+NOTE: Check if platformio is not installed GLOBALLY!
+
 Show installed:
 
 `pip list | grep esp`
