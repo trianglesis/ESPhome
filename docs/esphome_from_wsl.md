@@ -21,17 +21,19 @@ source venv/bin/activate
 source venv_esp_old/bin/activate
 # Install ESPHome
 pip3 install esphome
+
 pip3 install esphome==2025.10.2
+# OR
+pip3 install esphome==2025.5.0
 
 # Upgrade:
 pip install --upgrade esphome
-
 # Version
 (venv) [user@aaa ESPhome]$ esphome version
 Version: 2024.9.1
-
-
 ```
+
+NOTE: Check if platformio is not installed GLOBALLY!
 
 Show installed:
 
