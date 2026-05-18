@@ -1,0 +1,278 @@
+substitutions:
+  name: "bedroom-co2"
+  friendly_name: "bedroom-co2"
+
+esphome:
+  name: "bedroom-co2"
+  friendly_name: "bedroom-co2"
+    
+esp32:
+  board: esp32-c6-devkitm-1
+  flash_size: 4MB
+  variant: esp32c6
+  framework:
+    type: esp-idf
+    # version: "5.4.2"
+    # platform_version: 6.9.0
+
+logger:
+  level: INFO
+  baud_rate: 115200
+  hardware_uart: USB_SERIAL_JTAG
+  logs:
+    sensor: INFO
+    component: WARN
+    esp-idf: ERROR
+    template.sensor: INFO
+    text_sensor: INFO
+
+api:
+  encryption:
+    key: !secret api_key
+  actions:
+    - action: calibrate_co2_value
+      variables:
+        co2_ppm: int
+      then:
+      - scd4x.perform_forced_calibration:
+          value: !lambda 'return co2_ppm;'
+          id: scd41_esp32c6
+
+ota:
+  - platform: esphome
+    password: !secret ota_old_password
+    
+# Setup your WiFi password
+wifi:
+  networks:
+  - ssid: !secret wifi_ssid
+    password: !secret wifi_password
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "${friendly_name}"
+    password: !secret fall_back_wifi_password
+  reboot_timeout: 300s
+  fast_connect: true
+
+# Do not use WebServer when BT Proxy is used!
+web_server:
+  port: 80
+esp32_ble_tracker:
+  scan_parameters:
+    interval: 1100ms
+    window: 1100ms
+    active: true
+
+bluetooth_proxy:
+  active: true
+  connection_slots: 3
+
+time:
+  - platform: homeassistant
+    id: esptime
+
+output:
+  - platform: gpio
+    id: gpio_led_w1
+    pin:
+      number: 0
+  - platform: gpio
+    id: gpio_led_w2
+    pin:
+      number: 1
+
+i2c:
+  sda: 22
+  scl: 23
+  scan: False # Assigned directly
+  id: bus_a
+
+sensor:
+  # https://esphome.io/components/sensor/scd4x.html#configuration-variables
+  # https://esphome.io/components/sensor/index.html#sensor-filters
+  - platform: scd4x
+    i2c_id: bus_a
+    address: 0x62
+    update_interval: 30s
+    id: scd41_esp32c6
+    automatic_self_calibration: true
+    measurement_mode: periodic
+    co2:
+      name: "CO2"
+      id: "ppm_co2"
+      state_class: 'measurement'
+      device_class: "carbon_dioxide"
+      unit_of_measurement: "ppm"
+      icon: mdi:molecule-co2
+      filters:
+      - skip_initial: 1
+      on_value_range:
+      - above: 1800
+        then:
+          - light.turn_off: co2_led_1
+          - light.turn_on: co2_led_2
+          - logger.log: 
+              format: "Level CO2 is HIGH!"
+              level: WARN
+              tag: sensor.co2
+      - below: 1799
+        then:
+          - light.turn_off: co2_led_2
+          - light.turn_on: co2_led_1
+          - logger.log: 
+              format: "Level CO2 is NORM!"
+              level: WARN
+              tag: sensor.co2
+    temperature:
+      name: "Temperature scd4x"
+      id: "temperature_scd4x"
+      state_class: 'measurement'
+      device_class: "temperature"
+      filters:
+      - skip_initial: 1
+    humidity:
+      name: "Humidity scd4x"
+      id: "humidity_scd4x"
+      state_class: 'measurement'
+      device_class: "humidity"
+      unit_of_measurement: "%"
+      filters:
+      - skip_initial: 1
+      
+  # BME 680
+  - platform: bme680
+    i2c_id: bus_a
+    address: 0x77
+    update_interval: 30s
+    id: bme680_esp32c6
+    temperature:
+      name: "Temperature"
+      id: "temperature_bme680"
+      oversampling: 16x
+      state_class: 'measurement'
+      device_class: "temperature"
+    pressure:
+      name: "Pressure"
+      id: "pressure_bme680"
+      state_class: 'measurement'
+      device_class: "pressure"
+    humidity:
+      name: "Humidity"
+      id: "humidity_bme680"
+      state_class: 'measurement'
+      device_class: "humidity"
+    gas_resistance:
+      name: "Gas Resistance"
+      id: "gas_resistance_bme680"
+      
+  # AIR Q
+  - platform: template
+    name: "Indoor Air Quality"
+    id: iaq
+    icon: "mdi:gauge"
+    # calculation: comp_gas = log(R_gas[ohm]) + 0.04 log(Ohm)/%rh * hum[%rh]
+    lambda: |-
+      return log(id(gas_resistance_bme680).state) + 0.04 *  id(humidity_bme680).state;
+    state_class: "measurement"
+    # on_value_range:
+    # - above: 200
+    #   then:
+    #     - light.turn_off: co2_led_1
+    #     - light.turn_on: co2_led_2
+    #     - logger.log: 
+    #         format: "Air Qality Index is HIGH!"
+    #         level: WARN
+    #         tag: sensor.co2
+    # - below: 150
+    #   then:
+    #     - light.turn_off: co2_led_2
+    #     - light.turn_on: co2_led_1
+    #     - logger.log: 
+    #         format: "Air Qality Index is NORM!"
+    #         level: WARN
+    #         tag: sensor.co2
+
+  - platform: uptime
+    name: "${friendly_name} Uptime"
+    
+  - platform: wifi_signal # Reports the WiFi signal strength/RSSI in dB
+    name: "WiFi Signal dB"
+    id: wifi_signal_db
+    update_interval: 60s
+    icon: mdi:wifi
+    
+  - platform: copy # Reports the WiFi signal strength in %
+    source_id: wifi_signal_db
+    name: "WiFi Signal Percent"
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+    unit_of_measurement: "Signal %"
+    device_class: ""
+    
+text_sensor:
+  # BME680
+  - platform: template
+    name: "IAQ Classification"
+    icon: "mdi:checkbox-marked-circle-outline"
+    lambda: |-
+      if (int(id(iaq).state) <= 50) {
+        return {"Excellent"};
+      }
+      else if (int(id(iaq).state) <= 100) {
+        return {"Good"};
+      }
+      else if (int(id(iaq).state) <= 150) {
+        return {"Lightly polluted"};
+      }
+      else if (int(id(iaq).state) <= 200) {
+        return {"Moderately polluted"};
+      }
+      else if (int(id(iaq).state) <= 250) {
+        return {"Heavily polluted"};
+      }
+      else if (int(id(iaq).state) <= 350) {
+        return {"Severely polluted"};
+      }
+      else if (int(id(iaq).state) <= 500) {
+        return {"Extremely polluted"};
+      }
+      else {
+        return {"unknown"};
+      }
+    
+  # Other
+  - platform: wifi_info
+    ip_address:
+      name: "ESP IP Address"
+      icon: mdi:wifi
+    ssid:
+      name: "ESP Connected SSID"
+      icon: mdi:wifi
+    bssid:
+      name: "ESP Connected BSSID"
+      icon: mdi:wifi
+    mac_address:
+      name: "ESP Mac Wifi Address"
+      icon: mdi:wifi
+    dns_address:
+      name: "ESP DNS Address"
+      icon: mdi:wifi
+      
+button:
+  - platform: restart
+    name: "Restart"
+    
+light:
+  - platform: binary
+    id: co2_led_1
+    name: "CO2 light 1"
+    output: gpio_led_w1
+    icon: mdi:led-outline
+    
+  - platform: binary
+    id: co2_led_2
+    name: "CO2 light 2"
+    output: gpio_led_w2
+    icon: mdi:led-outline
+    
+# END

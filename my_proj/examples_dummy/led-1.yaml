@@ -1,0 +1,148 @@
+# https://devices.esphome.io/devices/Tuya-WB5-WiFi-5in1-LED-Controller
+# https://esphome.io/components/light/index.html
+# https://esphome.io/components/light/rgbct
+
+substitutions:
+  name: tuya_wb5_rgb_cct_led_1
+  friendly_name: WB5 LED Controller 1
+
+esphome:
+  name: tuya_wb5_rgb_cct_led_1
+  friendly_name: WB5 LED Controller 1
+bk72xx:
+  board: generic-bk7231n-qfn32-tuya
+
+# serial connection to Tuya MCU
+uart:
+  rx_pin: RX1
+  tx_pin: TX1
+  baud_rate: 9600
+
+# Register the Tuya MCU connection
+tuya:
+
+logger:
+  level: INFO
+  baud_rate: 0
+api:
+  encryption:
+    key: !secret api_key
+ota:
+  - platform: esphome
+    password: !secret ota_password
+wifi:
+  networks:
+  - ssid: !secret wifi_ssid
+    password: !secret wifi_password
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "${friendly_name}"
+    password: !secret fall_back_wifi_password
+  reboot_timeout: 300s
+  fast_connect: true
+
+captive_portal:
+
+web_server:
+  port: 80
+  version: 3
+  sorting_groups:
+  - id: sorting_group_diagnostic
+    name: "Diagnostic info"
+    sorting_weight: 60
+  - id: sorting_group_service
+    name: "Service"
+    sorting_weight: 90
+
+debug:
+  update_interval: 60s
+
+# https://devices.esphome.io/devices/Tuya-WB5-WiFi-5in1-LED-Controller#rgbww
+light:
+  - platform: "tuya" # dont forget to set the correct mode whit the button on the controller
+    name: "${name}"
+    id: tuya_wb5_rgb_cct_led_1
+    color_interlock: true # infinite loop isue when false (false is default)
+    gamma_correct: 1 # has built in gamma correct wil cause issuses when changed
+    default_transition_length: 0s # has built in transitions
+    switch_datapoint: 20
+
+    # for brightness
+    dimmer_datapoint: 22
+    min_value: 0
+    max_value: 1000 # Max value is 1000 (default is 255)
+
+    # for Correlated Color Temperature(CCT) or white channels
+    color_temperature_datapoint: 23
+    color_temperature_invert: true #set to true if connected as stated on the controller
+    color_temperature_max_value: 1000 # Max value is 1000 (default is 255)
+    cold_white_color_temperature: 6000 K # Change depending on LED strip
+    warm_white_color_temperature: 3000 K # Change depending on LED strip
+
+    # for RGB channels
+    color_datapoint: 24
+    color_type: hsv
+    
+    # Ensure the light turns on by default if the physical switch is actuated.
+    restore_mode: ALWAYS_OFF
+
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "ESP IP Address"
+      web_server:
+        sorting_group_id: sorting_group_diagnostic 
+    ssid:
+      name: "ESP Connected SSID"
+      web_server:
+        sorting_group_id: sorting_group_diagnostic
+    bssid:
+      name: "ESP Connected BSSID"
+      web_server:
+        sorting_group_id: sorting_group_diagnostic
+    mac_address:
+      name: "ESP Mac Wifi Address"
+      web_server:
+        sorting_group_id: sorting_group_diagnostic
+    dns_address:
+      name: "ESP DNS Address"
+      web_server:
+        sorting_group_id: sorting_group_diagnostic
+
+sensor:
+  - platform: uptime
+    name: "${friendly_name} Uptime"
+    web_server:
+      sorting_group_id: sorting_group_diagnostic
+
+  - platform: wifi_signal # Reports the WiFi signal strength/RSSI in dB
+    name: "WiFi Signal dB"
+    id: wifi_signal_db
+    update_interval: 60s
+    web_server:
+      sorting_group_id: sorting_group_diagnostic
+
+  - platform: copy # Reports the WiFi signal strength in %
+    source_id: wifi_signal_db
+    name: "WiFi Signal Percent"
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+    unit_of_measurement: "Signal %"
+    device_class: ""
+    web_server:
+      sorting_group_id: sorting_group_diagnostic
+
+##
+# Service buttons
+##
+
+button:
+- platform: restart
+  name: "Restart"
+  web_server:
+    sorting_group_id: sorting_group_service
+
+##
+# END visible
+##

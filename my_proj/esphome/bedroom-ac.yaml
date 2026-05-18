@@ -1,0 +1,212 @@
+# This example provides a basic configuration and description based on the M5STACK components
+# For further configuration you should visit the ESPHome docs https://esphome.io
+# Every line starting with a # can be removed.
+
+substitutions:
+  name: climatebedroom
+  friendly_name: Bedroom AC
+
+## BASIC CONFIGURATION
+esphome:
+  name: climatebedroom
+  friendly_name: Bedroom AC
+
+# Select chipset and board configuration - in this case M5STACK
+esp32:
+  board: m5stack-atom
+
+# [Optional] - Create web interface where you can control the AC from your web browser (without Home Assistant)
+web_server:
+  port: 80
+
+# Enable logging
+logger:
+  logs:
+    component: ERROR # Remove the "Your component takes to long to respond warning"
+
+# Enable native API for communication with Home Assistant, this can be removed if you do not plan to use it with Home Assistant
+api:
+  encryption:
+    key: !secret api_key
+
+# Enable OTA firmware update, you will be able to upload the firmware over WiFi without connecting the device by cables
+ota:
+  platform: esphome
+
+# Setup your WiFi password
+wifi:
+  networks:
+  - ssid: !secret wifi_ssid
+    password: !secret wifi_password
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "${friendly_name}"
+    password: !secret fall_back_wifi_password
+  reboot_timeout: 300s
+  fast_connect: true
+
+captive_portal:
+
+# Specify pins used by the board to comunicate with RS485 board - in this case M5STACK
+uart:
+  tx_pin: GPIO19   # Use GPIO26 for ATOM Tail485 
+  rx_pin: GPIO22   # Use GPIO32 for ATOM Tail485
+  # For older devices it could also be 2400. But you should start with 9600.
+  baud_rate: 9600
+  parity: EVEN
+
+## SAMSUNG AC CONFIGURATION
+
+# Import custom component from GitHub
+external_components:
+  - source: github://omerfaruk-aran/esphome_samsung_hvac_bus@main # Use @stable if you want a more stable experience, but note a lot of this example code breaks.
+    components: [samsung_ac]
+
+# Configuration of AC component
+samsung_ac:
+
+  # For NonNASA devices the following option can be enabled to prevent the device from sleeping when idle. This allows
+  # values like internal and external temperature to continue to be tracked when the device isn't in use.
+  non_nasa_keepalive: true
+  
+  # When enabled (set to true), this option will log the messages associated with undefined codes on the device. This is useful for debugging and identifying any unexpected or unknown codes that the device may receive during operation.
+  debug_log_undefined_messages: false
+  
+  # When enabled (set to true), this option logs messages associated with defined codes on the device. This helps in monitoring the behavior of the device by recording the activity related to known, expected codes.
+  debug_log_messages: false
+
+  # For half duplex RS485 board with DI, DE, RE, and RO pins, you have to control read/write with control pin
+  # see https://microcontrollerslab.com/rs485-serial-communication-esp32-esp8266-tutorial/ for wiring
+  #flow_control_pin: GPIO4
+
+  # Capabilities configure the features that all devices of your AC system have (all parts of this section are optional). 
+  # All capabilities are off by default, you need to enable only those your devices have.
+  # You can override or configure them also on a per-device basis (look below for that).
+  capabilities: 
+    vertical_swing: true
+    horizontal_swing: true
+    # Presets define special AC modes like Windfree, Eco, and so on. 
+    # The following modes are available: sleep, quiet, fast, longreach, windfree, eco.
+    presets: 
+      # Short version - a quick and simple way to enable presets.
+      quiet:
+        name: "quiet"
+        enabled: true
+      # Long version - allows customization, including localized names and control over enabling the presets.
+      fast:
+        name: "fastcooling"
+        enabled: true
+      windfree:
+        name: "windfree"
+        enabled: true
+      eco:
+        name: "eco"
+        enabled: true
+      sleep:
+        name: "sleep"
+        enabled: true
+      longreach:
+        name: "longreach"
+        enabled: true
+
+  devices:
+    # Skip everything below on the first run! Wait a minute, watch your ESPHome logs until you see the "Discovered devices:" section and you see some addresses:
+    # For NASA devices it looks like this (with 1 outdoor device and 4 indoor devices): 
+    #   Outdoor: 10.00.00
+    #   Indoor:  20.00.00, 20.00.01, 20.00.02, 20.00.03
+    # For NonNASA devices it looks like this (with 2 indoor devices): 
+    #   Indoor:  00, 01
+    # You need these addresses for the the sections below. If you see only a "-" then you should visit the troubleshooting section in the readme. 
+
+    # Repeat everything below for each indoor device address you see in your logs
+    - address: "20.00.00" # Indoor device address 
+      # Each property below is optional (climate, room_temperature etc.) - you can delete those which you dont need.
+      # For the names we suggest to choose a combination of room name and the thing it controls. 
+
+      # Configures/overrides the capabilites for this devices. 
+      # Look above for all options.
+      capabilities:
+        horizontal_swing: false # This device have no h swing. 
+        vertical_swing: true
+        # Presets define special AC modes like Windfree, Eco, and so on. 
+        # The following modes are available: sleep, quiet, fast, longreach, windfree, eco.
+        presets: 
+          # Short version - a quick and simple way to enable presets.
+          quiet:
+            name: "quiet"
+            enabled: true
+          # Long version - allows customization, including localized names and control over enabling the presets.
+          fast:
+            name: "fastcooling"
+            enabled: true
+          windfree:
+            name: "windfree"
+            enabled: true
+          eco:
+            name: "eco"
+            enabled: true
+          sleep:
+            name: "sleep"
+            enabled: true
+          longreach:
+            name: "longreach"
+            enabled: true
+
+      # Creates climate control in Home Assistant. A climate control combines multiple of the controls below (like temperature, mode etc.)
+      climate:
+        name: "Bedroom climate"
+
+      # The controls directly below are all included in the climate control. Its adviced to only add the climate control and skip the extra controls.
+      room_temperature:
+        name: "Bedroom temperature"
+      target_temperature:
+        name: "Bedroom target temperature"
+      power:
+        name: "Bedroom power"
+      mode:
+        name: "Bedroom mode"
+
+      #Add automatic_cleaning mode for Samsung AC NASA
+            #- Added the "automatic_cleaning" feature to the Samsung AC integration.
+            #- This mode ensures hygienic drying of all moisture in the indoor unit after the cooling process is completed.
+      automatic_cleaning:
+        name: "Bedroom automatic clean"
+
+      # If your AC sits near or inside the ceiling, the reported room temperature is often a little bit heigher then whats 
+      # measured below. This property can be used to correct that value.
+      room_temperature_offset: -1.4
+
+      # Only supported on NASA devices
+      room_humidity:
+        name: "Bedroom humidity"
+      
+    - address: "10.00.00" # Outdoor device address as the following components are dependent on an outdoor unit.
+      # This sensor captures and monitors specific error codes returned by the HVAC system.
+      # When an error occurs, the sensor detects the error code and updates its value accordingly.
+      # Additionally, by using the blueprint available at https://github.com/omerfaruk-aran/esphome_samsung_ac_blueprint,
+      # you can automatically send detailed error messages to your mobile devices based on the captured error codes.
+      error_code:
+        name: error_code
+        
+      # This sensor measures the instantaneous power consumption of the outdoor unit in Watts.
+      # The captured value represents the current power draw of the outdoor HVAC components, helping track energy usage patterns.
+      outdoor_instantaneous_power:
+        name: "Outdoor Instantaneous Power"
+
+      # This sensor records the cumulative energy consumption of the outdoor unit in kWh.
+      # It calculates the total energy consumed over time, allowing users to monitor and analyze energy efficiency.
+      outdoor_cumulative_energy:
+        name: "Outdoor Cumulative Energy"
+
+      # This sensor measures the current drawn by the outdoor unit in Amperes.
+      # Monitoring current values helps identify electrical irregularities and ensure safe power levels in the system.
+      outdoor_current:
+        name: "Outdoor Current"
+
+      # This sensor tracks the voltage supplied to the outdoor unit in Volts.
+      # Consistent voltage readings indicate stable power delivery, while deviations can help detect electrical issues in the system.
+      outdoor_voltage:
+        name: "Outdoor Voltage"
+
+      outdoor_temperature: # Should be used with outdoor device address
+        name: "Outdoor temperature"

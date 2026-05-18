@@ -18,8 +18,10 @@ cd esphome
 virtualenv --python=/usr/bin/python3 venv
 # Activate
 source venv/bin/activate
+source venv_esp_old/bin/activate
 # Install ESPHome
 pip3 install esphome
+pip3 install esphome==2025.10.2
 
 # Upgrade:
 pip install --upgrade esphome
@@ -27,6 +29,8 @@ pip install --upgrade esphome
 # Version
 (venv) [user@aaa ESPhome]$ esphome version
 Version: 2024.9.1
+
+
 ```
 
 Show installed:
@@ -90,20 +94,24 @@ usbipd attach --wsl --busid 11-1
 ```
 
 
-# Working
+## Working
 
-## Test
+### Test
 
 ```shell
 esphome config my_proj/esp32-c6-1.yaml
 esphome compile my_proj/esp32-c6-1.yaml
+
+esphome compile my_proj/led-1.yaml
+esphome compile my_proj/led-2.yaml
+esphome compile my_proj/led-3.yaml
 
 # Cant upload from WSL without USB bind
 esphome upload my_proj/esp32-c6-1.yaml
 ```
 
 
-## Start dashboard:
+### Start dashboard:
 
 read:
 - https://esphome.io/guides/getting_started_command_line#bonus-esphome-device-builder
@@ -119,3 +127,38 @@ esphome dashboard --port=8080 --address=127.0.0.1 my_proj/
 ```
 
 Open chrome: `http://127.0.0.1:8080/`
+
+
+## Issues
+
+- PermissionError: [Errno 13] Permission denied: 'xdg-user-dir'
+
+```shell
+echo $XDG_RUNTIME_DIR
+# /mnt/wslg/runtime-dir
+
+ls -lah /mnt/wslg/runtime-dir
+# total 0
+# drwxrwxrwx 3 user user 100 May 18 15:49 .
+# drwxrwxrwt 6 root root 280 May 18 15:49 ..
+# drwx------ 2 user user  80 May 18 15:49 pulse
+# srwxrwxrwx 1 user user   0 May 18 15:49 wayland-0
+# -rw-rw---- 1 user user   0 May 18 15:49 wayland-0.lock
+
+sudo chown user:user -R /mnt/wslg/runtime-dir
+sudo chmod 700 -R /mnt/wslg/runtime-dir
+# OR
+mkdir -p /mnt/wslg/run/user/1000
+sudo chown user:user -R /mnt/wslg/run/user/1000
+sudo chmod 700 -R /mnt/wslg/run/user/1000
+
+# OR
+/etc/wsl.conf
+
+sudo mkdir -p /run/user/$(id -u)
+sudo chmod 700 /run/user/$(id -u)
+export XDG_RUNTIME_DIR=/run/user/$(id -u)
+echo $XDG_RUNTIME_DIR
+sudo chmod 700 $XDG_RUNTIME_DIR
+ls -lah $XDG_RUNTIME_DIR
+```

@@ -1,0 +1,353 @@
+# Basic Config
+substitutions:
+  name: "SCW-WB-CB003"
+  friendly_name: "Led Strip CBU"
+
+esphome:
+  name: led-strip
+  friendly_name: led-strip
+  on_boot:
+    priority: 601
+    then:
+      - light.turn_on:
+          id: rgb_lightstrip1
+          brightness: 15%
+          red: 12%
+          blue: 12%
+          green: 12%
+
+# https://docs.libretiny.eu/boards/cbu/
+# https://developer.tuya.com/en/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u
+bk72xx:
+  board: cbu
+
+logger:
+  level: DEBUG
+api:
+  encryption:
+    key: !secret api_key
+ota:
+  - platform: esphome
+    password: !secret ota_password
+# Setup your WiFi password
+wifi:
+  networks:
+  - ssid: !secret wifi_ssid
+    password: !secret wifi_password
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "${friendly_name}"
+    password: !secret fall_back_wifi_password
+  reboot_timeout: 100s
+  fast_connect: true
+
+# captive_portal:
+
+# web_server:
+#   port: 80
+
+# Pin specs from: https://docs.libretiny.eu/boards/cbu/
+# P6 = Blue
+# P24 = Green
+# P26 = Red
+output:
+  # Tests
+  # - platform: libretiny_pwm
+  #   frequency: 1000 Hz
+  #   id: output_a
+  #   pin: P8
+  # Colours
+- platform: libretiny_pwm
+  frequency: 1000 Hz
+  id: output_blue
+  pin: P6
+- platform: libretiny_pwm
+  frequency: 1000 Hz
+  id: output_green
+  pin: P24
+- platform: libretiny_pwm
+  frequency: 1000 Hz
+  id: output_red
+  pin: P26
+
+
+light:
+  - platform: rgb
+    name: "rgb_strip_01"
+    default_transition_length: 1s
+    id: rgb_lightstrip1
+    red: output_red
+    green: output_green
+    blue: output_blue
+    # Ensure the light turns on by default if the physical switch is actuated.
+    restore_mode: ALWAYS_OFF
+    initial_state:
+      state: true
+      brightness: 15%
+      red: 12%
+      blue: 12%
+      green: 12%
+    effects:
+      # FLicker: https://esphome.io/components/light/index.html#flicker-effect
+      - flicker:
+      - flicker:
+          name: "Flicker 1"
+          alpha: 95%
+          intensity: 1.5%
+      - flicker:
+          name: "Flicker 2"
+          alpha: 85%
+          intensity: 2.5%
+      - flicker:
+          name: "Flicker 3"
+          alpha: 75%
+          intensity: 3.5%
+      # Random: https://esphome.io/components/light/index.html#random-effect
+      - random:
+      - random:
+          name: "Slow Random"
+          transition_length: 30s
+          update_interval: 30s
+      - random:
+          name: "Fast Random"
+          transition_length: 4s
+          update_interval: 5s
+      # Pulse: https://esphome.io/components/light/index.html#pulse-effect
+      # Pulsing to grab attention
+      - pulse:
+          name: "pulse_info_or_warning"
+          max_brightness: 60%
+          min_brightness: 10%
+          update_interval: 2s
+          transition_length:
+            on_length: 1s
+            off_length: 1s
+      - pulse:
+          name: "pulse_info_or_warning_fast"
+          max_brightness: 60%
+          min_brightness: 10%
+          update_interval: 1s
+          transition_length:
+            on_length: 500ms
+            off_length: 500ms
+      - pulse:
+          name: "pulse_info_or_warning_faster"
+          max_brightness: 60%
+          min_brightness: 10%
+          update_interval: 1s
+          transition_length:
+            on_length: 100ms
+            off_length: 100ms
+      - pulse:
+          name: "pulse_info_or_warning_night"
+          max_brightness: 10%
+          min_brightness: 3%
+          update_interval: 2s
+          transition_length:
+            on_length: 1s
+            off_length: 1s
+      - pulse:
+          name: "pulse_info_or_warning_fast_night"
+          max_brightness: 10%
+          min_brightness: 3%
+          update_interval: 1s
+          transition_length:
+            on_length: 500ms
+            off_length: 500ms
+      - pulse:
+          name: "pulse_info_or_warning_faster_night"
+          max_brightness: 10%
+          min_brightness: 3%
+          update_interval: 1s
+          transition_length:
+            on_length: 100ms
+            off_length: 100ms
+      # Strobe: https://esphome.io/components/light/index.html#strobe-effect
+      - strobe:
+      # Main Grid if OFF
+      - strobe:
+          name: "strobe_main_grid_off"
+          colors:
+            - state: true
+              brightness: 60%
+              color_brightness : 50%
+              red: 98%
+              green: 0%
+              blue: 0%
+              duration: 1s
+              transition_length: 2s
+            - state: true
+              brightness: 25%
+              color_brightness : 50%
+              red: 65%
+              green: 25%
+              blue: 25%
+              duration: 1s
+              transition_length: 2s
+      # Main grid is ON
+      - strobe:
+          name: "strobe_main_grid_on"
+          colors:
+            - state: true
+              brightness: 50%
+              color_brightness : 50%
+              red: 0%
+              green: 100%
+              blue: 0%
+              duration: 1s
+              transition_length: 2s
+            - state: true
+              brightness: 20%
+              color_brightness : 50%
+              red: 5%
+              green: 85%
+              blue: 15%
+              duration: 1s
+              transition_length: 2s
+      # Washing machine or Dryer finished but not ACK
+      - strobe:
+          name: "strobe_washing_dryer_machines"
+          colors:
+            - state: true
+              brightness: 50%
+              color_brightness : 50%
+              red: 0%
+              green: 0%
+              blue: 99%
+              duration: 1s
+              transition_length: 2s
+            - state: true
+              brightness: 20%
+              color_brightness : 50%
+              red: 5%
+              green: 15%
+              blue: 85%
+              duration: 1s
+              transition_length: 2s
+      # Air Alert
+      - strobe:
+          name: "strobe_air_alert"
+          colors:
+            # Red
+            - state: true
+              brightness: 50%
+              color_brightness : 50%
+              red: 98%
+              green: 10%
+              blue: 10%
+              duration: 1s
+              transition_length: 2s
+            # Blue
+            - state: true
+              brightness: 30%
+              color_brightness : 50%
+              red: 10%
+              green: 60%
+              blue: 99%
+              duration: 1s
+              transition_length: 2s
+      # Main Grid if OFF
+      - strobe:
+          name: "strobe_main_grid_off_night"
+          colors:
+            - state: true
+              brightness: 20%
+              color_brightness : 50%
+              red: 98%
+              green: 10%
+              blue: 10%
+              duration: 1s
+              transition_length: 2s
+            - state: true
+              brightness: 15%
+              color_brightness : 50%
+              red: 60%
+              green: 10%
+              blue: 10%
+              duration: 1s
+              transition_length: 2s
+      # Main grid is ON
+      - strobe:
+          name: "strobe_main_grid_on_night"
+          colors:
+            - state: true
+              brightness: 20%
+              color_brightness : 50%
+              red: 0%
+              green: 100%
+              blue: 0%
+              duration: 1s
+              transition_length: 2s
+            - state: true
+              brightness: 15%
+              color_brightness : 50%
+              red: 15%
+              green: 85%
+              blue: 15%
+              duration: 1s
+              transition_length: 2s
+      # Washing machine or Dryer finished but not ACK
+      - strobe:
+          name: "strobe_washing_dryer_machines_night"
+          colors:
+            - state: true
+              brightness: 20%
+              color_brightness : 50%
+              red: 0%
+              green: 0%
+              blue: 99%
+              duration: 1s
+              transition_length: 2s
+            - state: true
+              brightness: 15%
+              color_brightness : 50%
+              red: 5%
+              green: 15%
+              blue: 85%
+              duration: 1s
+              transition_length: 2s
+      # Air Alert
+      - strobe:
+          name: "strobe_air_alert_night"
+          colors:
+            # Red
+            - state: true
+              brightness: 18%
+              color_brightness : 50%
+              red: 98%
+              green: 10%
+              blue: 10%
+              duration: 1s
+              transition_length: 2s
+            # Blue
+            - state: true
+              brightness: 12%
+              color_brightness : 50%
+              red: 10%
+              green: 10%
+              blue: 99%
+              duration: 1s
+              transition_length: 2s
+
+##
+# Service buttons
+##
+
+button:
+- platform: restart
+  name: "Restart"
+
+text_sensor:
+
+- platform: libretiny
+  version:
+    name: LibreTiny Version
+
+sensor:
+  - platform: uptime
+    name: "${friendly_name} Uptime"
+    update_interval: 60s
+
+##
+# END visible
+##
