@@ -1,0 +1,167 @@
+# Basic Config
+substitutions:
+  name: "SCW-WB-CB003"
+  friendly_name: "Led Strip CBU"
+
+esphome:
+  name: led-strip
+  friendly_name: led-strip
+
+# https://docs.libretiny.eu/boards/cbu/
+# https://developer.tuya.com/en/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u
+bk72xx:
+  # board: cbu
+  board: generic-bk7231n-qfn32-tuya
+  family: BK7231N
+  framework:
+    loglevel: DEBUG
+    debug:
+      - CLIENT
+      - SERVER
+    version: latest
+
+# Tuya MCU on UART1 (BK72xx example)
+uart:
+  rx_pin: P1
+  tx_pin: P0
+  baud_rate: 9600
+    
+logger:
+  level: DEBUG
+api:
+  encryption:
+    key: !secret api_key
+ota:
+  - platform: esphome
+    password: !secret ota_password
+# Setup your WiFi password
+wifi:
+  networks:
+  - ssid: !secret wifi_ssid
+    password: !secret wifi_password
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "${friendly_name}"
+    password: !secret fall_back_wifi_password
+  reboot_timeout: 100s
+  fast_connect: true
+
+# captive_portal:
+
+# web_server:
+#   port: 80
+
+# Pin specs from: https://docs.libretiny.eu/boards/cbu/
+# P6 = Blue
+# P24 = Green
+# P26 = Red
+output:
+  # Colours
+  # P6 				PWM0 	
+# - platform: libretiny_pwm
+#   frequency: 1kHz
+#   id: output_pwm0
+#   pin: P6
+  # inverted: False
+  # min_power: 0.005
+  # max_power: 0.95
+  # P7 				PWM1
+- platform: libretiny_pwm
+  frequency: 1kHz
+  id: output_pwm1 # blue?
+  pin: P7
+  # inverted: False
+  # min_power: 0.005
+  # max_power: 0.95
+  # P8 				PWM2
+- platform: libretiny_pwm
+  frequency: 1kHz
+  id: output_pwm2 # green?
+  pin: P8
+  # inverted: False
+  # min_power: 0.005
+  # max_power: 0.95
+  # P9 				PWM3
+- platform: libretiny_pwm
+  frequency: 1kHz
+  id: output_pwm3 # red?
+  pin: P9
+  # inverted: False
+  # min_power: 0.005
+  # max_power: 0.95
+  # P24 			PWM4
+# - platform: libretiny_pwm
+#   frequency: 1kHz
+#   id: output_pwm4
+#   pin: P24
+#   # inverted: False
+#   # P26 			PWM5
+# - platform: libretiny_pwm
+#   frequency: 1kHz
+#   id: output_pwm5
+#   pin: P26
+#   inverted: False
+  
+light:
+  - platform: rgb
+    name: "rgb_strip_01"
+    id: rgb_lightstrip1
+    red: output_pwm1
+    green: output_pwm2
+    blue: output_pwm3
+    default_transition_length: 1s
+    # Ensure the light turns on by default if the physical switch is actuated.
+    # restore_mode: RESTORE_DEFAULT_ON
+
+##
+# Service buttons
+##
+
+button:
+- platform: restart
+  name: "Restart"
+
+switch:
+  # P6 				PWM0 - dying when ON
+  - platform: gpio
+    name: switch P6 
+    pin: P6
+  # # P7 				PWM1
+  # - platform: gpio
+  #   name: switch P7 
+  #   pin: P7
+  # # P8 				PWM2
+  # - platform: gpio
+  #   name: switch P8 
+  #   pin: P8
+  # # P9 				PWM3
+  # - platform: gpio
+  #   name: switch P9 
+  #   pin: P9
+  # P24 			PWM4 - dying when ON
+  - platform: gpio
+    name: switch P24
+    pin: P24
+  # P26 			PWM5 - dying when ON
+  - platform: gpio
+    name: switch P26
+    pin: P26
+  
+text_sensor:
+
+- platform: libretiny
+  version:
+    name: LibreTiny Version
+
+sensor:
+  - platform: uptime
+    name: "${friendly_name} Uptime"
+    update_interval: 60s
+  - platform: adc
+    pin: P23
+    name: "Brightness"
+    update_interval: 60s
+    
+##
+# END visible
+##

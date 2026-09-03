@@ -1,0 +1,103 @@
+# Basic Config
+substitutions:
+  name: "SCW-WB-CB003"
+  friendly_name: "Led Strip CBU"
+
+esphome:
+  name: led-strip-cbu
+  friendly_name: led-strip-cbu
+
+# https://docs.libretiny.eu/boards/cbu/
+# https://developer.tuya.com/en/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u
+bk72xx:
+  board: cbu
+
+logger:
+  level: DEBUG
+api:
+  encryption:
+    key: !secret api_key
+ota:
+  - platform: esphome
+    password: !secret ota_password
+# Setup your WiFi password
+wifi:
+  networks:
+  - ssid: !secret wifi_ssid
+    password: !secret wifi_password
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "${friendly_name}"
+    password: !secret fall_back_wifi_password
+  reboot_timeout: 100s
+  fast_connect: true
+
+# captive_portal:
+
+# web_server:
+#   port: 80
+
+# Pin specs from: https://docs.libretiny.eu/boards/cbu/
+# P6 = Blue
+# P24 = Green
+# P26 = Red
+output:
+  # Tests
+  # - platform: libretiny_pwm
+  #   frequency: 1kHz
+  #   id: output_a
+  #   pin: P8
+  # Colours
+- platform: libretiny_pwm
+  frequency: 1kHz
+  id: output_blue
+  pin: P6
+  # min_power: 0.000
+  # max_power: 0.995
+- platform: libretiny_pwm
+  frequency: 1kHz
+  id: output_green
+  pin: P24
+  # min_power: 0.000
+  # max_power: 0.995
+- platform: libretiny_pwm
+  frequency: 1kHz
+  id: output_red
+  pin: P26
+  # min_power: 0.000
+  # max_power: 0.995
+
+
+light:
+  - platform: rgb
+    name: "rgb_strip_01"
+    id: rgb_lightstrip1
+    red: output_red
+    green: output_green
+    blue: output_blue
+    default_transition_length: 1s
+    # Ensure the light turns on by default if the physical switch is actuated.
+    restore_mode: RESTORE_DEFAULT_ON
+
+##
+# Service buttons
+##
+
+button:
+- platform: restart
+  name: "Restart"
+
+text_sensor:
+
+- platform: libretiny
+  version:
+    name: LibreTiny Version
+
+sensor:
+  - platform: uptime
+    name: "${friendly_name} Uptime"
+    update_interval: 60s
+
+##
+# END visible
+##
