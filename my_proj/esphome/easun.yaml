@@ -1169,7 +1169,7 @@ text_sensor:
       };
       std::string values = "";
 
-      uint32_t mask = modbus_controller::dword_from_hex_str(x, 0);
+      uint32_t mask = modbus::helpers::dword_from_hex_str(x, 0);
       if (mask) {
         for (int i = 0; i < FAULTS_SIZE; i++) {
           if (mask & (1 << i)) {
@@ -1227,7 +1227,7 @@ text_sensor:
       };
       std::string values = "";
 
-      uint32_t mask = modbus_controller::dword_from_hex_str(x, 0);
+      uint32_t mask = modbus::helpers::dword_from_hex_str(x, 0);
       if (mask) {
         for (int i = 0; i < FAULTS_SIZE; i++) {
           if (mask & (1 << i)) {
@@ -1278,7 +1278,7 @@ text_sensor:
       };
       std::string values = "";
 
-      uint32_t mask = modbus_controller::dword_from_hex_str(x, 0);
+      uint32_t mask = modbus::helpers::dword_from_hex_str(x, 0);
       if (mask) {
         for (int i = 0; i < WARNINGS_SIZE; i++) {
           if (mask & (1 << i)) {
@@ -1550,3 +1550,4 @@ button:
         - lambda: |-
             auto cmd = esphome::modbus_controller::ModbusCommandItem::create_write_multiple_command(id(smg0), 426, 1, {1});
             id(smg0)->queue_command(cmd);
+
