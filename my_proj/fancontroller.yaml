@@ -80,8 +80,8 @@ web_server:
 uart:
   - id: uart_0
     baud_rate: 9600
-    tx_pin: GPIO02
-    rx_pin: GPIO03
+    tx_pin: GPIO18
+    rx_pin: GPIO09
 
 modbus:
   - id: modbus0
@@ -1575,25 +1575,25 @@ button:
 ### PWM CONTROLLER
 output:
   - platform: ledc
-    pin: GPIO12
-    frequency: 25000Hz
     id: fan1_pwm
+    pin: GPIO22
+    frequency: 25000Hz
   - platform: ledc
-    pin: GPIO04
-    frequency: 25000 Hz
     id: fan2_pwm
-  - platform: ledc
-    pin: GPIO05
+    pin: GPIO15
     frequency: 25000 Hz
-    id: fan3_pwm
   - platform: ledc
+    id: fan3_pwm
+    pin: GPIO02
+    frequency: 25000 Hz
+  - platform: ledc
+    id: fan4_pwm
     pin: GPIO06
     frequency: 25000 Hz
-    id: fan4_pwm
   - platform: ledc
-    pin: GPIO07
-    frequency: 25000 Hz
     id: fan5_pwm
+    pin: GPIO04
+    frequency: 25000 Hz
 
 ### FAN CONTROLLER
 fan:
