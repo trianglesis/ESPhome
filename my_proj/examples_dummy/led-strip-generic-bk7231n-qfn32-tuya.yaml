@@ -9,22 +9,20 @@ esphome:
 
 # https://docs.libretiny.eu/boards/cbu/
 # https://developer.tuya.com/en/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u
+# https://github.com/libretiny-eu/libretiny/pull/215#issuecomment-1850540827
 bk72xx:
-  # board: cbu
-  board: generic-bk7231n-qfn32-tuya
+  board: "generic-bk7231n-qfn32-tuya"
   family: BK7231N
   framework:
     loglevel: DEBUG
     debug:
-      - CLIENT
-      - SERVER
-    version: latest
+    # version: dev
 
 # Tuya MCU on UART1 (BK72xx example)
 uart:
-  rx_pin: P1
-  tx_pin: P0
-  baud_rate: 9600
+  rx_pin: P10  # P1, P10
+  tx_pin: P11  # P0, P11
+  baud_rate: 115200
     
 logger:
   level: DEBUG
@@ -57,98 +55,84 @@ wifi:
 # P26 = Red
 output:
   # Colours
-  # P6 				PWM0 	
-# - platform: libretiny_pwm
-#   frequency: 1kHz
-#   id: output_pwm0
-#   pin: P6
-  # inverted: False
-  # min_power: 0.005
-  # max_power: 0.95
-  # P7 				PWM1
+  # P6      PWM0 - BLUE, but died!
 - platform: libretiny_pwm
-  frequency: 1kHz
-  id: output_pwm1 # blue?
-  pin: P7
-  # inverted: False
-  # min_power: 0.005
-  # max_power: 0.95
-  # P8 				PWM2
-- platform: libretiny_pwm
-  frequency: 1kHz
-  id: output_pwm2 # green?
-  pin: P8
-  # inverted: False
-  # min_power: 0.005
-  # max_power: 0.95
-  # P9 				PWM3
-- platform: libretiny_pwm
-  frequency: 1kHz
-  id: output_pwm3 # red?
-  pin: P9
-  # inverted: False
-  # min_power: 0.005
-  # max_power: 0.95
-  # P24 			PWM4
+  pin: P6
+  id: output_pwm0
+  frequency: 1000 Hz
+  max_power: 0.75
+  min_power: 0
+#   # P7      PWM1 - NOTHING - not died
 # - platform: libretiny_pwm
-#   frequency: 1kHz
-#   id: output_pwm4
-#   pin: P24
-#   # inverted: False
-#   # P26 			PWM5
+#   pin: P7
+#   id: output_pwm1
+#   # P8      PWM2 - NOTHING - not died
 # - platform: libretiny_pwm
-#   frequency: 1kHz
-#   id: output_pwm5
-#   pin: P26
-#   inverted: False
+#   pin: P8
+#   id: output_pwm2
+#   # P9      PWM3 - NOTHING - not died
+# - platform: libretiny_pwm
+#   pin: P9
+#   id: output_pwm3
+#   # P24     PWM4  - GREEN, but died!
+- platform: libretiny_pwm
+  pin: P24
+  id: output_pwm4
+  frequency: 1000 Hz
+  max_power: 0.75
+  min_power: 0
+  # P26     PWM5  - RED, but died!
+- platform: libretiny_pwm
+  pin: P26
+  id: output_pwm5
+  frequency: 1000 Hz
+  max_power: 0.90
+  min_power: 0
   
 light:
   - platform: rgb
     name: "rgb_strip_01"
     id: rgb_lightstrip1
-    red: output_pwm1
-    green: output_pwm2
-    blue: output_pwm3
+    red: output_pwm5
+    green: output_pwm4
+    blue: output_pwm0
     default_transition_length: 1s
-    # Ensure the light turns on by default if the physical switch is actuated.
-    # restore_mode: RESTORE_DEFAULT_ON
+    flash_transition_length: 1s
+    restore_mode: ALWAYS_OFF
+    initial_state:
+      state: false
 
-##
-# Service buttons
-##
+# switch:
+#   - platform: gpio
+#     id: relay
+#     name: strip_relay
+#     pin: P22
+#   # P6      PWM0 - dying when ON
+#   # - platform: gpio
+#   #   name: switch P6 
+#   #   pin: P6
+#   # P7      PWM1
+#   # - platform: gpio
+#   #   name: switch P7 
+#   #   pin: P7
+#   # # P8      PWM2
+#   # - platform: gpio
+#   #   name: switch P8 
+#   #   pin: P8
+#   # # P9      PWM3
+#   # - platform: gpio
+#   #   name: switch P9 
+#   #   pin: P9
+#   # P24     PWM4 - dying when ON
+#   # - platform: gpio
+#   #   name: switch P24
+#   #   pin: P24
+#   # P26     PWM5 - dying when ON
+#   # - platform: gpio
+#   #   name: switch P26
+#   #   pin: P26
 
-button:
-- platform: restart
-  name: "Restart"
-
-switch:
-  # P6 				PWM0 - dying when ON
-  - platform: gpio
-    name: switch P6 
-    pin: P6
-  # # P7 				PWM1
-  # - platform: gpio
-  #   name: switch P7 
-  #   pin: P7
-  # # P8 				PWM2
-  # - platform: gpio
-  #   name: switch P8 
-  #   pin: P8
-  # # P9 				PWM3
-  # - platform: gpio
-  #   name: switch P9 
-  #   pin: P9
-  # P24 			PWM4 - dying when ON
-  - platform: gpio
-    name: switch P24
-    pin: P24
-  # P26 			PWM5 - dying when ON
-  - platform: gpio
-    name: switch P26
-    pin: P26
-  
 text_sensor:
-
 - platform: libretiny
   version:
     name: LibreTiny Version
@@ -159,9 +143,27 @@ sensor:
     update_interval: 60s
   - platform: adc
     pin: P23
-    name: "Brightness"
-    update_interval: 60s
-    
+    name: "ADC Raw value"
+    unit_of_measurement: "V"
+    update_interval: 10s
+  # - platform: pulse_meter
+  #   pin: P7
+  #   name: "PWM1"
+  # - platform: pulse_meter
+  #   pin: P8
+  #   name: "PWM2"
+  # - platform: pulse_meter
+  #   pin: P9
+  #   name: "PWM3"
+
+
 ##
-# END visible
+# Service buttons
 ##
+
+button:
+- platform: restart
+  name: "Restart"
+
+debug:
+  update_interval: 1s
