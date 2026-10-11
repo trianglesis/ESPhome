@@ -8,3 +8,6 @@ my_proj/secrets.yaml
 /my_proj/secrets.yaml
 # Only this
 !/my_components/README.md
+my_proj/.device-builder-peer-link-key.bin
+my_proj/.device-builder-preferences.json
+my_proj/.device-builder.json

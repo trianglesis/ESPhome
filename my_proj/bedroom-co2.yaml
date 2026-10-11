@@ -5,7 +5,11 @@ substitutions:
 esphome:
   name: "bedroom-co2"
   friendly_name: "bedroom-co2"
-    
+  on_boot:
+      priority: 600
+      then:
+        - switch.turn_on: gpio_ant_butt
+  
 esp32:
   board: esp32-c6-devkitm-1
   flash_size: 4MB
@@ -55,17 +59,18 @@ wifi:
   fast_connect: true
 
 # Do not use WebServer when BT Proxy is used!
-web_server:
-  port: 80
-esp32_ble_tracker:
-  scan_parameters:
-    interval: 1100ms
-    window: 1100ms
-    active: true
+# web_server:
+#   port: 80
 
-bluetooth_proxy:
-  active: true
-  connection_slots: 3
+# esp32_ble_tracker:
+#   scan_parameters:
+#     interval: 1100ms
+#     window: 1100ms
+#     active: true
+
+# bluetooth_proxy:
+#   active: true
+#   connection_slots: 3
 
 time:
   - platform: homeassistant
@@ -93,7 +98,7 @@ sensor:
   - platform: scd4x
     i2c_id: bus_a
     address: 0x62
-    update_interval: 30s
+    update_interval: 60s
     id: scd41_esp32c6
     automatic_self_calibration: true
     measurement_mode: periodic
@@ -115,7 +120,8 @@ sensor:
               format: "Level CO2 is HIGH!"
               level: WARN
               tag: sensor.co2
-      - below: 1799
+      - below: 1800
+        above: 1
         then:
           - light.turn_off: co2_led_2
           - light.turn_on: co2_led_1
@@ -143,7 +149,7 @@ sensor:
   - platform: bme680
     i2c_id: bus_a
     address: 0x77
-    update_interval: 30s
+    update_interval: 60s
     id: bme680_esp32c6
     temperature:
       name: "Temperature"
@@ -166,13 +172,14 @@ sensor:
       id: "gas_resistance_bme680"
       
   # AIR Q
+  # https://esphome.io/components/sensor/bme680/
   - platform: template
     name: "Indoor Air Quality"
     id: iaq
     icon: "mdi:gauge"
     # calculation: comp_gas = log(R_gas[ohm]) + 0.04 log(Ohm)/%rh * hum[%rh]
     lambda: |-
-      return log(id(gas_resistance_bme680).state) + 0.04 *  id(humidity_bme680).state;
+      return log(id(gas_resistance_bme680).get_state()) + 0.04 *  id(humidity_bme680).get_state();
     state_class: "measurement"
     # on_value_range:
     # - above: 200
@@ -198,10 +205,11 @@ sensor:
   - platform: wifi_signal # Reports the WiFi signal strength/RSSI in dB
     name: "WiFi Signal dB"
     id: wifi_signal_db
-    update_interval: 60s
+    update_interval: 120s
     icon: mdi:wifi
-    
-  - platform: copy # Reports the WiFi signal strength in %
+
+    # Reports the WiFi signal strength in %
+  - platform: copy
     source_id: wifi_signal_db
     name: "WiFi Signal Percent"
     filters:
@@ -248,14 +256,8 @@ text_sensor:
     ssid:
       name: "ESP Connected SSID"
       icon: mdi:wifi
-    bssid:
-      name: "ESP Connected BSSID"
-      icon: mdi:wifi
     mac_address:
       name: "ESP Mac Wifi Address"
-      icon: mdi:wifi
-    dns_address:
-      name: "ESP DNS Address"
       icon: mdi:wifi
       
 button:
@@ -274,5 +276,13 @@ light:
     name: "CO2 light 2"
     output: gpio_led_w2
     icon: mdi:led-outline
+
+switch:
+  - platform: gpio
+    name: "External ANT Use"
+    id: gpio_ant_butt
+    pin:
+      number: 14
+    icon: mdi:antenna
     
 # END

@@ -5,6 +5,10 @@ substitutions:
 esphome:
   name: "kitchen-co2"
   friendly_name: "kitchen-co2"
+  on_boot:
+      priority: 600
+      then:
+        - switch.turn_on: gpio_ant_butt
 
 esp32:
   board: esp32-c6-devkitm-1
@@ -38,8 +42,8 @@ api:
           id: scd41_esp32c6
 
 # Do not use WebServer when BT Proxy is used!
-web_server:
-  port: 80
+# web_server:
+#   port: 80
 # esp32_ble_tracker:
 #   scan_parameters:
 #     interval: 1100ms
@@ -92,7 +96,7 @@ sensor:
   - platform: scd4x
     i2c_id: bus_a
     address: 0x62
-    update_interval: 30s
+    update_interval: 60s
     id: scd41_esp32c6
     automatic_self_calibration: true
     measurement_mode: periodic
@@ -104,20 +108,21 @@ sensor:
       unit_of_measurement: "ppm"
       icon: mdi:molecule-co2
       on_value_range:
+      - below: 1800
+        above: 1
+        then:
+          - light.turn_off: co2_led_2
+          - light.turn_on: co2_led_1
+          - logger.log:
+              format: Level CO2 is NORM!
+              level: WARN
+              tag: sensor.co2
       - above: 1800
         then:
           - light.turn_off: co2_led_1
           - light.turn_on: co2_led_2
           - logger.log: 
               format: "Level CO2 is HIGH!"
-              level: WARN
-              tag: sensor.co2
-      - below: 1799
-        then:
-          - light.turn_off: co2_led_2
-          - light.turn_on: co2_led_1
-          - logger.log: 
-              format: "Level CO2 is NORM!"
               level: WARN
               tag: sensor.co2
     temperature:
@@ -194,10 +199,11 @@ sensor:
   - platform: wifi_signal # Reports the WiFi signal strength/RSSI in dB
     name: "WiFi Signal dB"
     id: wifi_signal_db
-    update_interval: 60s
+    update_interval: 120s
     icon: mdi:wifi
-    
-  - platform: copy # Reports the WiFi signal strength in %
+
+  # Reports the WiFi signal strength in %
+  - platform: copy
     source_id: wifi_signal_db
     name: "WiFi Signal Percent"
     filters:
@@ -244,14 +250,8 @@ text_sensor:
     ssid:
       name: "ESP Connected SSID"
       icon: mdi:wifi
-    bssid:
-      name: "ESP Connected BSSID"
-      icon: mdi:wifi
     mac_address:
       name: "ESP Mac Wifi Address"
-      icon: mdi:wifi
-    dns_address:
-      name: "ESP DNS Address"
       icon: mdi:wifi
       
 button:
@@ -270,5 +270,14 @@ light:
     name: "CO2 light 2"
     output: gpio_led_w2
     icon: mdi:led-outline
+
+switch:
+  - platform: gpio
+    name: "External ANT Use"
+    id: gpio_ant_butt
+    pin:
+      number: 14
+    icon: mdi:antenna
     
+
 # END

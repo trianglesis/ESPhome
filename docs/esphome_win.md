@@ -41,6 +41,15 @@ Run WEB dashboard only for this project:
 esphome dashboard my_proj/
 # More
 esphome dashboard --port=8080 --address=127.0.0.1 my_proj/
+# NEW
+python -m venv .venv && source .venv/bin/activate
+pip install 'esphome-device-builder[esphome]'
+
+esphome-device-builder ~/esphome-configs
+esphome-device-builder my_proj/
 ```
 
 Open chrome: `http://127.0.0.1:8080/`
+
+New:
+The server starts on `http://localhost:6052`. Run with --help for the full flag set.

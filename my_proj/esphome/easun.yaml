@@ -89,7 +89,14 @@ modbus_controller:
     address: 0x01
     modbus_id: modbus0
     command_throttle: 200ms
-    update_interval: 2s
+    update_interval: 60s
+  # Faster update for most critical values!
+  # Exclude from HA recorder!
+  - id: smgfast
+    address: 0x01
+    modbus_id: modbus0
+    command_throttle: 200ms
+    update_interval: 250ms
 
 time:
   - platform: sntp
@@ -98,13 +105,13 @@ sensor:
   # Network info
   - platform: wifi_signal
     name: "${friendly_name} WiFi Signal"
-    update_interval: 60s
+    update_interval: 300s
     web_server:
       sorting_group_id: sorting_group_diagnostic
 
   - platform: uptime
     name: "${friendly_name} Uptime"
-    update_interval: 60s
+    update_interval: 120s
     web_server:
       sorting_group_id: sorting_group_diagnostic
 
@@ -181,8 +188,18 @@ sensor:
   #                                                                             5: Charging
   #                                                                             6: Fault
   - platform: modbus_controller
-    modbus_controller_id: smg0
+    modbus_controller_id: smgfast
     name: "${name} operation mode id"
+    address: 201
+    register_type: holding
+    value_type: U_WORD
+    accuracy_decimals: 0
+    web_server:
+      sorting_group_id: sorting_group_general_info
+
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} operation mode id history"
     address: 201
     register_type: holding
     value_type: U_WORD
@@ -362,8 +379,21 @@ sensor:
 
   # Output active power                                  1W       Int   213 1 R
   - platform: modbus_controller
-    modbus_controller_id: smg0
+    modbus_controller_id: smgfast
     name: "${name} output active power"
+    address: 213
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+    web_server:
+      sorting_group_id: sorting_group_invertor_sensors
+
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} output active power history"
     address: 213
     register_type: holding
     value_type: S_WORD
@@ -390,8 +420,23 @@ sensor:
 
   # Battery average voltage                              0.1V     Int   215 1 R
   - platform: modbus_controller
-    modbus_controller_id: smg0
+    modbus_controller_id: smgfast
     name: "${name} battery average voltage"
+    address: 215
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "V"
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    web_server:
+      sorting_group_id: sorting_group_battery_sensors
+      
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} battery average voltage history"
     address: 215
     register_type: holding
     value_type: S_WORD
@@ -422,9 +467,26 @@ sensor:
 
   # Battery average power                                1W       Int   217 1 R
   - platform: modbus_controller
-    modbus_controller_id: smg0
+    modbus_controller_id: smgfast
     name: "${name} battery average power"
     id: smg0_battery_average_power
+    address: 217
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+    web_server:
+      sorting_group_id: sorting_group_battery_sensors
+    on_value:
+      - component.update: smg0_discharging_power
+      - component.update: smg0_charging_power
+        
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} battery average power history"
+    id: smg0_battery_average_power_history
     address: 217
     register_type: holding
     value_type: S_WORD
@@ -514,8 +576,21 @@ sensor:
 
   # DCDC Temperature                                     1°C      Int   226 1 R
   - platform: modbus_controller
-    modbus_controller_id: smg0
+    modbus_controller_id: smgfast
     name: "${name} dcdc temperature"
+    address: 226
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 0
+    web_server:
+      sorting_group_id: sorting_group_general_info
+
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} dcdc temperature history"
     address: 226
     register_type: holding
     value_type: S_WORD
@@ -528,8 +603,21 @@ sensor:
 
   # Inverter Temperature                                 1°C      Int   227 1 R
   - platform: modbus_controller
-    modbus_controller_id: smg0
+    modbus_controller_id: smgfast
     name: "${name} inverter temperature"
+    address: 227
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 0
+    web_server:
+      sorting_group_id: sorting_group_general_info
+
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} inverter temperature history"
     address: 227
     register_type: holding
     value_type: S_WORD
@@ -542,8 +630,21 @@ sensor:
 
   # Battery state of charge                              1%       UInt  229 1 R
   - platform: modbus_controller
-    modbus_controller_id: smg0
+    modbus_controller_id: smgfast
     name: "${name} battery state of charge"
+    address: 229
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "%"
+    device_class: battery
+    state_class: measurement
+    accuracy_decimals: 0
+    web_server:
+      sorting_group_id: sorting_group_battery_sensors
+
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} battery state of charge history"
     address: 229
     register_type: holding
     value_type: U_WORD
@@ -556,8 +657,23 @@ sensor:
 
   # Battery average current                              0.1A     Int   232 1 R Positive number means charging, negative number means discharging
   - platform: modbus_controller
-    modbus_controller_id: smg0
+    modbus_controller_id: smgfast
     name: "${name} battery average current"
+    address: 232
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "A"
+    device_class: current
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    web_server:
+      sorting_group_id: sorting_group_battery_sensors
+
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} battery average current history"
     address: 232
     register_type: holding
     value_type: S_WORD
@@ -1012,7 +1128,7 @@ text_sensor:
 
   # Fault code                                                    ULong 100 2 R
   - platform: modbus_controller
-    modbus_controller_id: smg0
+    modbus_controller_id: smgfast
     name: "${name} fault"
     address: 100
     register_type: holding
@@ -1053,7 +1169,65 @@ text_sensor:
       };
       std::string values = "";
 
-      uint32_t mask = modbus_controller::dword_from_hex_str(x, 0);
+      uint32_t mask = modbus::helpers::dword_from_hex_str(x, 0);
+      if (mask) {
+        for (int i = 0; i < FAULTS_SIZE; i++) {
+          if (mask & (1 << i)) {
+            values.append(FAULTS[i]);
+            values.append(";");
+          }
+        }
+        if (!values.empty()) {
+          values.pop_back();
+        }
+      }
+      return values;
+    web_server:
+      sorting_group_id: sorting_group_general_info
+
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} fault history"
+    address: 100
+    register_type: holding
+    register_count: 2
+    response_size: 4
+    raw_encode: HEXBYTES
+    icon: mdi:alert-circle
+    lambda: |-
+      static const uint8_t FAULTS_SIZE = 27;
+      static const char *const FAULTS[FAULTS_SIZE] = {
+          "Over temperature of inverter module",                     // 0000 0000 0000 0000 0000 0000 0000 0001 (1)
+          "Over temperature of DCDC module",                         // 0000 0000 0000 0000 0000 0000 0000 0010 (2)
+          "Battery over voltage",                                    // 0000 0000 0000 0000 0000 0000 0000 0100 (3)
+          "PV module over temperature",                              // 0000 0000 0000 0000 0000 0000 0000 1000 (4)
+          "Output short circuit",                                    // 0000 0000 0000 0000 0000 0000 0001 0000 (5)
+          "Inverter over voltage",                                   // 0000 0000 0000 0000 0000 0000 0010 0000 (6)
+          "Output over load",                                        // 0000 0000 0000 0000 0000 0000 0100 0000 (7)
+          "Bus over voltage",                                        // 0000 0000 0000 0000 0000 0000 1000 0000 (8)
+          "Bus soft start timed out",                                // 0000 0000 0000 0000 0000 0001 0000 0000 (9)
+          "PV over current",                                         // 0000 0000 0000 0000 0000 0010 0000 0000 (10)
+          "PV over voltage",                                         // 0000 0000 0000 0000 0000 0100 0000 0000 (11)
+          "Battery over current",                                    // 0000 0000 0000 0000 0000 1000 0000 0000 (12)
+          "Inverter over current",                                   // 0000 0000 0000 0000 0001 0000 0000 0000 (13)
+          "Bus low voltage",                                         // 0000 0000 0000 0000 0010 0000 0000 0000 (14)
+          "Reserve (Bit 15)",                                        // 0000 0000 0000 0000 0100 0000 0000 0000 (15)
+          "Inverter DC component is too high",                       // 0000 0000 0000 0000 1000 0000 0000 0000 (16)
+          "Reserve (Bit 17)",                                        // 0000 0000 0000 0001 0000 0000 0000 0000 (17)
+          "The zero bias of output current is too large",            // 0000 0000 0000 0010 0000 0000 0000 0000 (18)
+          "The zero bias of inverter current is too large",          // 0000 0000 0000 0100 0000 0000 0000 0000 (19)
+          "The zero bias of battery current is too large",           // 0000 0000 0000 1000 0000 0000 0000 0000 (20)
+          "The zero bias of PV current is too large",                // 0000 0000 0001 0000 0000 0000 0000 0000 (21)
+          "Inverter low voltage",                                    // 0000 0000 0010 0000 0000 0000 0000 0000 (22)
+          "Inverter negative power protection",                      // 0000 0000 0100 0000 0000 0000 0000 0000 (23)
+          "The host in the parallel system is lost",                 // 0000 0000 1000 0000 0000 0000 0000 0000 (24)
+          "Synchronization signal abnormal in the parallel system",  // 0000 0001 0000 0000 0000 0000 0000 0000 (25)
+          "The battery type is incompatible",                        // 0000 0010 0000 0000 0000 0000 0000 0000 (26)
+          "Parallel versions are incompatible",                      // 0000 0100 0000 0000 0000 0000 0000 0000 (27)
+      };
+      std::string values = "";
+
+      uint32_t mask = modbus::helpers::dword_from_hex_str(x, 0);
       if (mask) {
         for (int i = 0; i < FAULTS_SIZE; i++) {
           if (mask & (1 << i)) {
@@ -1104,7 +1278,7 @@ text_sensor:
       };
       std::string values = "";
 
-      uint32_t mask = modbus_controller::dword_from_hex_str(x, 0);
+      uint32_t mask = modbus::helpers::dword_from_hex_str(x, 0);
       if (mask) {
         for (int i = 0; i < WARNINGS_SIZE; i++) {
           if (mask & (1 << i)) {
@@ -1122,8 +1296,30 @@ text_sensor:
 
   # Operation Mode                                                UInt  201 1 R 0: Power On, 1: Standby, 2: Mains, 3: Off-Grid, 4: Bypass, 5: Charging, 6: Fault
   - platform: modbus_controller
-    modbus_controller_id: smg0
+    modbus_controller_id: smgfast
     name: "${name} operation mode"
+    address: 201
+    register_type: holding
+    raw_encode: HEXBYTES
+    icon: mdi:information
+    lambda: |-
+      uint16_t value = modbus_controller::word_from_hex_str(x, 0);
+      switch (value) {
+        case 0: return std::string("Power On");
+        case 1: return std::string("Standby");
+        case 2: return std::string("Mains");
+        case 3: return std::string("Off-Grid");
+        case 4: return std::string("Bypass");
+        case 5: return std::string("Charging");
+        case 6: return std::string("Fault");
+      }
+      return std::string("Unknown");
+    web_server:
+      sorting_group_id: sorting_group_general_info
+
+  - platform: modbus_controller
+    modbus_controller_id: smg0
+    name: "${name} operation mode history"
     address: 201
     register_type: holding
     raw_encode: HEXBYTES
@@ -1354,3 +1550,4 @@ button:
         - lambda: |-
             auto cmd = esphome::modbus_controller::ModbusCommandItem::create_write_multiple_command(id(smg0), 426, 1, {1});
             id(smg0)->queue_command(cmd);
+
