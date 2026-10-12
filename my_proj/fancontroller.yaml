@@ -14,8 +14,9 @@ esphome:
     version: 1.5.0
 
 esp32:
+  board: esp32-c6-devkitc-1
+  flash_size: 8MB
   variant: esp32c6
-  flash_size: 4MB
   framework:
     type: esp-idf
     sdkconfig_options:
@@ -1377,7 +1378,7 @@ text_sensor:
     raw_encode: HEXBYTES
     icon: mdi:information
     lambda: |-
-      uint16_t value = modbus_controller::word_from_hex_str(x, 0);
+      uint16_t value = modbus::helpers::word_from_hex_str(x, 0);
       switch (value) {
         case 0: return std::string("Power On");
         case 1: return std::string("Standby");
@@ -1399,7 +1400,7 @@ text_sensor:
     raw_encode: HEXBYTES
     icon: mdi:information
     lambda: |-
-      uint16_t value = modbus_controller::word_from_hex_str(x, 0);
+      uint16_t value = modbus::helpers::word_from_hex_str(x, 0);
       switch (value) {
         case 0: return std::string("Power On");
         case 1: return std::string("Standby");
@@ -1658,36 +1659,41 @@ output:
 ### FAN CONTROLLER
 fan:
   - platform: speed
-    output: fan1_pwm
+    id: fan1_controller
     name: "Fan 1"
+    output: fan1_pwm
     speed_count: 7
     icon: "mdi:fan"
     web_server:
       sorting_group_id: sorting_group_fan_options
   - platform: speed
-    output: fan2_pwm
+    id: fan2_controller
     name: "Fan 2"
+    output: fan2_pwm
     speed_count: 7
     icon: "mdi:fan"
     web_server:
       sorting_group_id: sorting_group_fan_options
   - platform: speed
-    output: fan3_pwm
+    id: fan3_controller
     name: "Fan 3"
+    output: fan3_pwm
     speed_count: 7
     icon: "mdi:fan"
     web_server:
       sorting_group_id: sorting_group_fan_options
   - platform: speed
-    output: fan4_pwm
+    id: fan4_controller
     name: "Fan 4"
+    output: fan4_pwm
     speed_count: 7
     icon: "mdi:fan"
     web_server:
       sorting_group_id: sorting_group_fan_options
   - platform: speed
-    output: fan5_pwm
+    id: fan5_controller
     name: "Fan 5"
+    output: fan5_pwm
     speed_count: 7
     icon: "mdi:fan"
     web_server:
