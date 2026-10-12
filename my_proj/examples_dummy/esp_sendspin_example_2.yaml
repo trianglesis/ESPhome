@@ -82,7 +82,7 @@ speaker:
     channel: stereo
     timeout: never
     buffer_duration: 60ms
-  # Virtual speakers to combine the announcement and media streams together into one output
+    # Virtual speakers to combine the announcement and media streams together into one output
   - platform: mixer
     id: mixing_speaker
     output_speaker: i2s_audio_speaker
@@ -93,7 +93,7 @@ speaker:
         timeout: never
       - id: media_mixing_input
         timeout: never
-  # Virtual speakers to resample each pipelines' audio, if necessary, as the mixer speaker requires the same sample rate
+    # Virtual speakers to resample each pipelines' audio, if necessary, as the mixer speaker requires the same sample rate
   - platform: resampler
     id: media_resampling_speaker
     output_speaker: media_mixing_input
@@ -127,6 +127,8 @@ media_player:
     volume_min: 0.4
     volume_max: 0.85
 
+
+# BAD FORMAT!
 external_components:
   - source:
       # https://github.com/esphome/esphome/pull/14933
