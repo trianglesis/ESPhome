@@ -72,9 +72,12 @@ web_server:
   - id: sorting_group_options
     name: "Options"
     sorting_weight: 50
+  - id: sorting_group_fan_options
+    name: "FanOptions"
+    sorting_weight: 60
   - id: sorting_group_diagnostic
     name: "Diagnostic info"
-    sorting_weight: 60
+    sorting_weight: 90
 
 # Inverter
 uart:
@@ -116,6 +119,63 @@ sensor:
     update_interval: 120s
     web_server:
       sorting_group_id: sorting_group_diagnostic
+
+  # FAN Tachometer: Pulse Counter
+  - platform: pulse_counter
+    id: fan1_tachometer
+    pin: GPIO21
+    name: "Fan 1 RPM"
+    unit_of_measurement: 'RPM'
+    icon: 'mdi:fan'
+    filters:
+      - multiply: 0.5  # Use 0.5 for 2 pulses/rev (standard 4-pin fan = 2 pulses per rotation -> 1/2 = 0.5; use 0.333 for 3 pulses/rev like AC Infinity)
+    update_interval: 3s
+    web_server:
+      sorting_group_id: sorting_group_fan_options
+  - platform: pulse_counter
+    id: fan2_tachometer
+    pin: GPIO23
+    name: "Fan 2 RPM"
+    unit_of_measurement: 'RPM'
+    icon: 'mdi:fan'
+    filters:
+      - multiply: 0.5  # Use 0.5 for 2 pulses/rev (standard 4-pin fan = 2 pulses per rotation -> 1/2 = 0.5; use 0.333 for 3 pulses/rev like AC Infinity)
+    update_interval: 3s
+    web_server:
+      sorting_group_id: sorting_group_fan_options
+  - platform: pulse_counter
+    id: fan3_tachometer
+    pin: GPIO05
+    name: "Fan 3 RPM"
+    unit_of_measurement: 'RPM'
+    icon: 'mdi:fan'
+    filters:
+      - multiply: 0.5  # Use 0.5 for 2 pulses/rev (standard 4-pin fan = 2 pulses per rotation -> 1/2 = 0.5; use 0.333 for 3 pulses/rev like AC Infinity)
+    update_interval: 3s
+    web_server:
+      sorting_group_id: sorting_group_fan_options
+  - platform: pulse_counter
+    id: fan4_tachometer
+    pin: GPIO07
+    name: "Fan 4 RPM"
+    unit_of_measurement: 'RPM'
+    icon: 'mdi:fan'
+    filters:
+      - multiply: 0.5  # Use 0.5 for 2 pulses/rev (standard 4-pin fan = 2 pulses per rotation -> 1/2 = 0.5; use 0.333 for 3 pulses/rev like AC Infinity)
+    update_interval: 3s
+    web_server:
+      sorting_group_id: sorting_group_fan_options
+  - platform: pulse_counter
+    id: fan5_tachometer
+    pin: GPIO03
+    name: "Fan 5 RPM"
+    unit_of_measurement: 'RPM'
+    icon: 'mdi:fan'
+    filters:
+      - multiply: 0.5  # Use 0.5 for 2 pulses/rev (standard 4-pin fan = 2 pulses per rotation -> 1/2 = 0.5; use 0.333 for 3 pulses/rev like AC Infinity)
+    update_interval: 3s
+    web_server:
+      sorting_group_id: sorting_group_fan_options
 
   # INVERTER
   # Added manually by me from: 
@@ -1584,7 +1644,7 @@ output:
     frequency: 25000 Hz
   - platform: ledc
     id: fan3_pwm
-    pin: GPIO02
+    pin: GPIO04
     frequency: 25000 Hz
   - platform: ledc
     id: fan4_pwm
@@ -1592,7 +1652,7 @@ output:
     frequency: 25000 Hz
   - platform: ledc
     id: fan5_pwm
-    pin: GPIO04
+    pin: GPIO02
     frequency: 25000 Hz
 
 ### FAN CONTROLLER
@@ -1602,26 +1662,36 @@ fan:
     name: "Fan 1"
     speed_count: 7
     icon: "mdi:fan"
+    web_server:
+      sorting_group_id: sorting_group_fan_options
   - platform: speed
     output: fan2_pwm
     name: "Fan 2"
     speed_count: 7
     icon: "mdi:fan"
+    web_server:
+      sorting_group_id: sorting_group_fan_options
   - platform: speed
     output: fan3_pwm
     name: "Fan 3"
     speed_count: 7
     icon: "mdi:fan"
+    web_server:
+      sorting_group_id: sorting_group_fan_options
   - platform: speed
     output: fan4_pwm
     name: "Fan 4"
     speed_count: 7
     icon: "mdi:fan"
+    web_server:
+      sorting_group_id: sorting_group_fan_options
   - platform: speed
     output: fan5_pwm
     name: "Fan 5"
     speed_count: 7
     icon: "mdi:fan"
+    web_server:
+      sorting_group_id: sorting_group_fan_options
 
 # Buitin LED
 light:
