@@ -1,0 +1,198 @@
+# https://gist.github.com/formatBCE/a1eef482c2a5ed36dfbb22e273ee3d94
+esphome:
+  name: sendspin-player-1
+  friendly_name: sendspin-player-1
+  min_version: 2026.3.0
+  on_boot:
+    priority: 600
+    then:
+      - script.execute: draw_display
+esp32:
+  board: esp32-s3-devkitc-1
+  cpu_frequency: 240MHz
+  variant: esp32s3
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y"
+      CONFIG_SPIRAM_RODATA: "y"
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: "y"
+      CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
+      CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
+      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
+      CONFIG_MBEDTLS_SSL_PROTO_TLS1_3: "y"
+
+psram:
+  mode: octal
+  speed: 80MHz
+  ignore_not_found: false
+
+api:
+  reboot_timeout: 0s # to avoid rebooting without HA
+
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  on_connect:
+    - script.execute: draw_display
+  on_disconnect:
+    - script.execute: draw_display
+  ap:
+    ssid: "Sendspin-Player-1"
+    password: "HpNtkwZG6iMk"
+
+captive_portal:
+
+network:
+  enable_ipv6: true
+
+logger:
+  level: debug
+  logs:
+    wifi: info
+    api: info
+    mdns: info
+
+i2s_audio:
+  - id: i2s_output
+    i2s_lrclk_pin: 
+      number: 13
+      allow_other_uses: false
+    i2s_bclk_pin:  
+      number: 11
+      allow_other_uses: false
+
+speaker:
+  # Hardware speaker output
+  - platform: i2s_audio
+    id: i2s_audio_speaker
+    sample_rate: 48000
+    i2s_mode: primary
+    i2s_dout_pin: 12
+    bits_per_sample: 32bit
+    i2s_audio_id: i2s_output
+    dac_type: external
+    channel: stereo
+    timeout: never
+    buffer_duration: 60ms
+  # Virtual speakers to combine the announcement and media streams together into one output
+  - platform: mixer
+    id: mixing_speaker
+    output_speaker: i2s_audio_speaker
+    num_channels: 2
+    task_stack_in_psram: true
+    source_speakers:
+      - id: announcement_mixing_input
+        timeout: never
+      - id: media_mixing_input
+        timeout: never
+  # Virtual speakers to resample each pipelines' audio, if necessary, as the mixer speaker requires the same sample rate
+  - platform: resampler
+    id: media_resampling_speaker
+    output_speaker: media_mixing_input
+    # output_speaker: i2s_audio_speaker
+    sample_rate: 48000
+    bits_per_sample: 16
+
+sendspin:
+  id: sendspin_hub
+  task_stack_in_psram: false
+
+media_source:
+  - platform: sendspin
+    id: sendspin_media_source
+    fixed_delay: 480 microseconds
+
+media_player:
+  - platform: sendspin
+    id: sendspin_group_media_player
+  - platform: speaker_source
+    id: external_media_player
+    name: Media Player
+    media_pipeline:
+      format: FLAC     # FLAC is the least processor intensive codec
+      num_channels: 2
+      sample_rate: 48000
+      speaker: media_resampling_speaker
+      sources:
+        - sendspin_media_source
+    volume_increment: 0.05
+    volume_min: 0.4
+    volume_max: 0.85
+
+external_components:
+  - source:
+      # https://github.com/esphome/esphome/pull/14933
+      type: git
+      url: https://github.com/kahrendt/esphome
+      ref: 890e33f99af2c2ea15dc74c3ec4cf32d25203526
+    components: [const, media_source, sendspin]
+
+button:
+  - platform: restart
+    id: restart_button
+    name: Restart
+    entity_category: config
+    disabled_by_default: true
+    icon: "mdi:restart"
+
+debug:
+  update_interval: 5s
+
+light:
+  - platform: esp32_rmt_led_strip
+    id: led_ww
+    name: LED onboard
+    disabled_by_default: true
+    internal: false
+    rgb_order: GRB
+    pin: 48
+    num_leds: 1
+    rmt_symbols: 192
+    chipset: ws2812
+    entity_category: config
+    default_transition_length: 0s
+    effects:
+      - pulse:
+      - pulse:
+          name: "Fast Pulse"
+          transition_length: 0.3s
+          update_interval: 0.3s
+          min_brightness: 0%
+          max_brightness: 100%
+      - pulse:
+          name: "Slow Pulse"
+          transition_length: 1s
+          update_interval: 1s
+          min_brightness: 0%
+          max_brightness: 100%
+
+script:
+  - id: draw_display
+    then:
+      - if:
+          condition:
+            wifi.connected:
+          then:
+            - light.turn_on:
+                id: led_ww           
+                red: 0%
+                green: 50%
+                blue: 100%
+                brightness: 30%
+                effect: "none"
+          else:
+            - light.turn_on:
+                id: led_ww           
+                red: 100%
+                green: 0%
+                blue: 0%
+                brightness: 40%
+                effect: slow pulse

@@ -21,6 +21,11 @@ Sendspin:
 - <https://www.youtube.com/watch?v=FJGy4X0ubIQ>
 - <https://esphome.io/components/media_player/speaker/>
 
+
+Nice example with virtual sources for notifications:
+
+- <https://gist.github.com/formatBCE/a1eef482c2a5ed36dfbb22e273ee3d94>
+
 [Config yaml example](../../my_proj/examples_dummy/esp_sendspin_example.yaml)
 
 ### ETC:
