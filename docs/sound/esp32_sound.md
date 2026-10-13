@@ -2,6 +2,10 @@
 
 - <https://github.com/gnumpi/esphome_audio> ???
 
+Use this:
+
+- <https://github.com/RealDeco/SendspinZero>
+
 ## Esphome
 
 - <https://new.esphome.io/components/speaker/i2s_audio/> ???
